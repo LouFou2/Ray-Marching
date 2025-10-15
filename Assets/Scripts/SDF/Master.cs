@@ -29,6 +29,9 @@ public class Master : MonoBehaviour {
 
         int threadGroupsX = Mathf.CeilToInt (cam.pixelWidth / 8.0f);
         int threadGroupsY = Mathf.CeilToInt (cam.pixelHeight / 8.0f);
+
+        //maybe set a more sophisticated color here from another shader?
+
         raymarching.Dispatch (0, threadGroupsX, threadGroupsY, 1);
 
         Graphics.Blit (target, destination);

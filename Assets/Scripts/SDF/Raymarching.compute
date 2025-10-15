@@ -97,13 +97,13 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
             colour = colourB;
         }
     } 
-    // Blend
+    // Blend (Union)
     else if (operation == 1) {
         float4 blend = Blend(dstA,dstB,colourA,colourB, blendStrength);
         dst = blend.w;
         colour = blend.xyz;
     }
-    // Cut
+    // Cut (Difference)
     else if (operation == 2) {
         // max(a,-b)
         if (-dstB > dst) {
@@ -111,7 +111,7 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
             colour = colourB;
         }
     }
-    // Mask
+    // Mask (Intersect)
     else if (operation == 3) {
         // max(a,b)
         if (dstB > dst) {
@@ -150,7 +150,6 @@ float4 SceneInfo(float3 eye) {
         float localDst = GetShapeDistance(shape,eye);
         float3 localColour = shape.colour;
 
-
         for (int j = 0; j < numChildren; j ++) {
             Shape childShape = shapes[i+j+1];
             float childDst = GetShapeDistance(childShape,eye);
@@ -162,7 +161,9 @@ float4 SceneInfo(float3 eye) {
         i+=numChildren; // skip over children in outer loop
         
         float4 globalCombined = Combine(globalDst, localDst, globalColour, localColour, shape.operation, shape.blendStrength);
+
         globalColour = globalCombined.xyz;
+
         globalDst = globalCombined.w;        
     }
 
@@ -219,9 +220,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float dst = sceneInfo.w;
         
         if (dst <= epsilon) {
+
+            //Light and Color - potentially do some shading here?
             float3 pointOnSurface = ray.origin + ray.direction * dst;
             float3 normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-            float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
+            float3 lightDir = (positionLight) ? normalize(_Light-ray.origin) : -_Light;
             float lighting = saturate(saturate(dot(normal,lightDir)));
             float3 col = sceneInfo.xyz;
             
