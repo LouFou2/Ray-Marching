@@ -9,6 +9,7 @@ public class Master : MonoBehaviour {
     Camera cam;
     Light lightSource;
     List<ComputeBuffer> buffersToDispose;
+    public float time;
 
     void Init () {
         cam = Camera.current;
@@ -39,6 +40,8 @@ public class Master : MonoBehaviour {
         foreach (var buffer in buffersToDispose) {
             buffer.Dispose ();
         }
+
+        time += Time.deltaTime;
     }
 
     void CreateScene () {
@@ -93,6 +96,7 @@ public class Master : MonoBehaviour {
         raymarching.SetMatrix ("_CameraInverseProjection", cam.projectionMatrix.inverse);
         raymarching.SetVector ("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         raymarching.SetBool ("positionLight", !lightIsDirectional);
+        raymarching.SetFloat("_Time", time);
     }
 
     void InitRenderTexture () {

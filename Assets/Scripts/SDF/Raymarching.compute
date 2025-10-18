@@ -13,6 +13,8 @@ static const float maxDst = 80;
 static const float epsilon = 0.001f;
 static const float shadowBias = epsilon * 50;
 
+float _Time;
+
 struct Shape {
     
     float3 position;
@@ -123,9 +125,11 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
     return float4(colour,dst);
 }
 
+
 float GetShapeDistance(Shape shape, float3 eye) {
    
     if (shape.shapeType == 0) {
+
         return SphereDistance(eye, shape.position, shape.size.x);
     }
     else if (shape.shapeType == 1) {
@@ -137,7 +141,12 @@ float GetShapeDistance(Shape shape, float3 eye) {
 
     return maxDst;
 }
+float GetDisplacedDistance(Shape shape, float3 eye){
+    float dist = GetShapeDistance(shape, eye);
+    // displacement stuff here
+    return dist;
 
+}
 
 float4 SceneInfo(float3 eye) {
     float globalDst = maxDst;
