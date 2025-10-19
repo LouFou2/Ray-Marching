@@ -128,33 +128,15 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 388277350}
-  - component: {fileID: 388277349}
   - component: {fileID: 388277352}
   - component: {fileID: 388277351}
   m_Layer: 0
-  m_Name: Sphere0 (1)
+  m_Name: Tail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &388277349
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 388277348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b751b99fe7674499f882f8c7e4148ff4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shapeType: 0
-  operation: 1
-  colour: {r: 0.20784311, g: 0.8980392, b: 0.5424356, a: 1}
-  blendStrength: 0.484
-  numChildren: 0
 --- !u!4 &388277350
 Transform:
   m_ObjectHideFlags: 0
@@ -184,7 +166,7 @@ SpringJoint:
   m_AutoConfigureConnectedAnchor: 1
   m_ConnectedAnchor: {x: 0, y: 0, z: 0}
   m_Spring: 100
-  m_Damper: 0.2
+  m_Damper: 1
   m_MinDistance: 0
   m_MaxDistance: 0
   m_Tolerance: 0.025
@@ -203,7 +185,7 @@ Rigidbody:
   m_GameObject: {fileID: 388277348}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 10
+  m_Drag: 3
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -283,7 +265,7 @@ GameObject:
   - component: {fileID: 402423413}
   - component: {fileID: 402423415}
   m_Layer: 0
-  m_Name: Sphere0
+  m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -511,7 +493,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &776969877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,10 +506,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7733df089513b342a472a4b5e58f40b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controlBlob: {fileID: 402423414}
-  followerBlob: {fileID: 388277350}
+  controlBlob: {fileID: 402423412}
+  followerBlob: {fileID: 388277348}
   maxFollowDistance: 1
+  tailMinScale: 0.1
   blobDistance: 0
+  controllerDirection: {x: 0, y: 0, z: 0}
+  ogControlRadius: 0
+  ogFollowerRadius: 0
 --- !u!4 &776969878
 Transform:
   m_ObjectHideFlags: 0
@@ -650,7 +636,55 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   raymarching: {fileID: 7200000, guid: 07335a552fc334acd81fb9585f26ff7e, type: 3}
-  time: 172.12782
+  time: 612.7385
+--- !u!1 &810587462
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 810587464}
+  - component: {fileID: 810587463}
+  m_Layer: 0
+  m_Name: TailSpawner2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &810587463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810587462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 482a46f895e2d854ab4803a30e8d7c17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  headObject: {fileID: 402423412}
+  tailTransform: {fileID: 388277350}
+  spherePrefab: {fileID: 6160690219377994778, guid: c09cfa4c9e51b824b9d07b5279db106a, type: 3}
+  maxTailDistance: 5
+--- !u!4 &810587464
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810587462}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -694,7 +728,53 @@ Transform:
   m_GameObject: {fileID: 1058997077}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.55401766, y: 0.00000006892296, z: -0.5781677}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1314826478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1314826480}
+  - component: {fileID: 1314826479}
+  m_Layer: 0
+  m_Name: TrailSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1314826479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314826478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 590e6924ddbbb474bbd7f85a21df50e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  doubleBlobScript: {fileID: 776969877}
+  spherePrefab: {fileID: 6160690219377994778, guid: c09cfa4c9e51b824b9d07b5279db106a, type: 3}
+--- !u!4 &1314826480
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314826478}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.26, y: -0.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -848,8 +928,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 783089569}
   - {fileID: 1058997079}
-  - {fileID: 776969878}
-  - {fileID: 396947373}
-  - {fileID: 612506731}
+  - {fileID: 810587464}
   - {fileID: 402423414}
   - {fileID: 388277350}
+  - {fileID: 776969878}
+  - {fileID: 1314826480}
+  - {fileID: 396947373}
+  - {fileID: 612506731}

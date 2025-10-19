@@ -16,7 +16,7 @@ public class InputManager : MonoBehaviour
 
     void Start()
     {
-        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + 3));
+        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + 5));
         prevPosition = new Vector3(mousePosition.x, mousePosition.y, controlledSphereTransform.position.z);
     }
     void Update()

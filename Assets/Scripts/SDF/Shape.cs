@@ -25,7 +25,8 @@ public class Shape : MonoBehaviour
     public Vector3 Scale {
         get {
             Vector3 parentScale = Vector3.one;
-            if (transform.parent != null && transform.parent.GetComponent<Shape>() != null) {
+            if (transform.parent != null && transform.parent.GetComponent<Shape>() != null)
+            {
                 parentScale = transform.parent.GetComponent<Shape>().Scale;
             }
             return Vector3.Scale(transform.localScale, parentScale);
