@@ -46,6 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   shapeType: 0
   operation: 1
-  colour: {r: 0.20784311, g: 0.8980392, b: 0.8435243, a: 1}
+  colour: {r: 0.037201855, g: 0.28932303, b: 0.7169812, a: 1}
   blendStrength: 0.33
   numChildren: 0

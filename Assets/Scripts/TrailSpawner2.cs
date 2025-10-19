@@ -29,11 +29,10 @@ public class TrailSpawner2 : MonoBehaviour
         distance = Mathf.Clamp(distance, 0, maxTailDistance);
         tailDirection = (tailPos - headPos).normalized;
 
-        if (distance > totalRadii) // if the distance of the tail is outside the radii of all existing spheres
+        if (distance > totalRadii + 0.001f) // if the distance of the tail is outside the radii of all existing spheres
         {
             //we start spawning more spheres
             GameObject newSphere = Instantiate(spherePrefab, tailPos, Quaternion.identity);
-            newSphere.SetActive(false);
 
             spherePrefabs.Add(newSphere);
 
@@ -42,7 +41,7 @@ public class TrailSpawner2 : MonoBehaviour
         {
             // we need to remove and destroy the last sphere in the list
             int lastIndex = spherePrefabs.Count - 1;
-            if (lastIndex > -1) 
+            if (lastIndex > 0) 
             {
                 GameObject sphereToRemove = spherePrefabs[lastIndex];
                 totalRadii -= sphereToRemove.transform.localScale.x;
@@ -56,7 +55,10 @@ public class TrailSpawner2 : MonoBehaviour
         totalRadii = headRadius; // the head only uses the radius, as the head is in the center of the first "diameter"
         for (int i = 0; i < spherePrefabs.Count; i++)
         {
-            spherePrefabs[i].transform.position = headPos + (totalRadii * tailDirection);
+            if(spherePrefabs.Count > 1) //meaning there is actually more than just the tail sphere
+                spherePrefabs[i].transform.position = headPos + (totalRadii * tailDirection);
+            else
+                spherePrefabs[0].transform.position = tailPos; // i can only be 0
 
             //scale the new sphere
             float newSphereDistance = Vector3.Distance(spherePrefabs[i].transform.position, headPos);
@@ -65,8 +67,6 @@ public class TrailSpawner2 : MonoBehaviour
             float factoredScale = headRadius * invLerped;
             float exponent = Mathf.Pow(factoredScale, 3);
             spherePrefabs[i].transform.localScale = new Vector3(exponent, exponent, exponent);
-
-            spherePrefabs[i].SetActive(true);
 
             totalRadii += exponent;
         }
