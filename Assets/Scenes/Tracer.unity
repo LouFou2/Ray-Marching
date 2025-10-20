@@ -129,7 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 402423414}
   - component: {fileID: 402423413}
-  - component: {fileID: 402423415}
   m_Layer: 0
   m_Name: Head
   m_TagString: Untagged
@@ -169,33 +168,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &402423415
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 402423412}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!1 &657181061
 GameObject:
   m_ObjectHideFlags: 0
@@ -400,7 +372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   raymarching: {fileID: 7200000, guid: 07335a552fc334acd81fb9585f26ff7e, type: 3}
-  time: 0.39333332
+  time: 18.859234
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,8 +455,8 @@ MonoBehaviour:
   controlTipTransform: {fileID: 402423414}
   spherePrefab: {fileID: 6160690219377994778, guid: c09cfa4c9e51b824b9d07b5279db106a, type: 3}
   distanceBetweenSpawns: 1
-  sphereMoveSpeed: 3
-  scaleNoiseFactor: 0.2
+  sphereMoveSpeed: 1.6
+  scaleNoiseFactor: 1
 --- !u!4 &1214985618
 Transform:
   m_ObjectHideFlags: 0
