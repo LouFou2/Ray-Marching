@@ -9,13 +9,16 @@ public class Master : MonoBehaviour {
     Camera cam;
     Light lightSource;
     List<ComputeBuffer> buffersToDispose;
-    public float time;
+    public float time = 0f;
 
     void Init () {
         cam = Camera.current;
         lightSource = FindObjectOfType<Light> ();
     }
-
+    private void Awake()
+    {
+        time = 0f;
+    }
 
     void OnRenderImage (RenderTexture source, RenderTexture destination) {
         Init ();

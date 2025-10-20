@@ -14,6 +14,8 @@ public class InputManager : MonoBehaviour
     public float moveSpeed = 0f;
     public Vector3 moveDirection = Vector3.zero;
 
+    [SerializeField] float cursorDepth = 5f;
+
     void Start()
     {
         mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + 5));
@@ -24,7 +26,7 @@ public class InputManager : MonoBehaviour
         controlledSphereTransform.rotation = cam.transform.rotation;
 
         //get mouse movement
-        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + 3));
+        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
 
         Vector3 targetPosition = new Vector3(mousePosition.x, mousePosition.y, controlledSphereTransform.position.z);
 
