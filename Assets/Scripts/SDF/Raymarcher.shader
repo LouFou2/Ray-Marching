@@ -22,6 +22,7 @@ Shader "Hidden/Raymarcher"
             uniform float4x4 _CamFrustum, _CamToWorld;
             uniform float _maxDistance;
             uniform float4 _sphere1;
+            uniform float4 _sphere2;
 
             struct appdata
             {
@@ -58,10 +59,16 @@ Shader "Hidden/Raymarcher"
                 return length(p) - s;
             }
 
+            float unionSDF(float distA, float distB) {
+                return min(distA, distB);
+            }
+
             float distanceField(float3 p)
             {
                 float sphere1 = sdSphere(p - _sphere1.xyz, _sphere1.w);
-                return sphere1;
+                float sphere2 = sdSphere(p - _sphere2.xyz, _sphere2.w);
+                float addedSpheres = unionSDF(sphere1, sphere2);
+                return addedSpheres;
             }
 
             float3 getNormal(float3 p)

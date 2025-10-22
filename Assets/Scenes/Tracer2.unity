@@ -182,8 +182,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _shader: {fileID: 4800000, guid: 5b542594f478cee45984eaa59133a0af, type: 3}
-  _maxDistance: 100
-  _sphere1: {x: -0.27, y: 0, z: 11, w: 2}
+  _maxDistance: 50
+  _sphere1: {x: 0, y: 0, z: 10, w: 2}
+  _sphere2: {x: -3.58, y: 0, z: 10.47, w: 2.27}
 --- !u!81 &776795850
 AudioListener:
   m_ObjectHideFlags: 0
