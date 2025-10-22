@@ -19,7 +19,7 @@ Shader "Hidden/Raymarcher"
             #include "UnityCG.cginc"
 
             sampler2D _MainTex;
-            uniform float4 _CamWorldSpace; //camera position in world space ***
+            //uniform float4 _CamWorldSpace; //camera position in world space ***
             uniform float4x4 _CamFrustum, _CamToWorld;
 
             struct appdata
@@ -57,8 +57,10 @@ Shader "Hidden/Raymarcher"
             fixed4 frag (v2f i) : SV_Target
             {
                 float3 rayDirection = normalize(i.ray.xyz);
-                float3 rayOrigin = _CamWorldSpace;
-                //return fixed4(1,0,0,1);
+                //float3 rayOrigin = _CamWorldSpace;
+                float3 rayOrigin = _WorldSpaceCameraPos;
+
+
                 return fixed4(rayDirection, 1);
             }
             ENDCG

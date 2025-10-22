@@ -45,7 +45,7 @@ public class RaymarchCamera : MonoBehaviour
 
         _raymarchMaterial.SetMatrix("_CamFrustum", CamFrustum(_camera));
         _raymarchMaterial.SetMatrix("_CamToWorld", _camera.cameraToWorldMatrix);
-        _raymarchMaterial.SetVector("_CamWorldSpace", _camera.transform.position);
+        //_raymarchMaterial.SetVector("_CamWorldSpace", _camera.transform.position);
 
         RenderTexture.active = destination;
         GL.PushMatrix();
