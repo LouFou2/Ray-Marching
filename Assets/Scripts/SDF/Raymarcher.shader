@@ -64,11 +64,21 @@ Shader "Hidden/Raymarcher"
                 return sphere1;
             }
 
+            float3 getNormal(float3 p)
+            {
+                const float2 offset = float2(0.001,0.0);
+                float3 n = float3(
+                    distanceField(p + offset.xyy) - distanceField(p - offset.xyy),
+                    distanceField(p + offset.yxy) - distanceField(p - offset.yxy),
+                    distanceField(p + offset.yyx) - distanceField(p - offset.yyx));
+                return normalize(n);    
+            }
+
             fixed4 raymarching(float3 ro, float3 rd) // ray origin and ray direction
             {
                 fixed4 result = fixed4(1,1,1,1);
 
-                const int max_iteration = 64; //*** might need higher number for more complex scenes
+                const int max_iteration = 256; //*** might need higher number for more complex scenes
 
                 float t = 0; //distance travelled along ray direction
 
@@ -88,8 +98,9 @@ Shader "Hidden/Raymarcher"
 
                     if(d < 0.001)
                     {
-                        //we have hit something : do shading
-                        result = fixed4(1,1,1,1);
+                        //SHADING
+                        float3 n = getNormal(p);
+                        result = fixed4(n,1);
                         break;
                     }
                     t += d;
