@@ -74,6 +74,12 @@ Shader "Hidden/Raymarcher"
                 return normalize(n);    
             }
 
+            float fresnel(float3 n, float3 rd)
+            {
+                float dotProduct = 1 - saturate(abs(dot(n, rd)));
+                return dotProduct;
+            }
+
             fixed4 raymarching(float3 ro, float3 rd) // ray origin and ray direction
             {
                 fixed4 result = fixed4(1,1,1,1);
@@ -100,7 +106,8 @@ Shader "Hidden/Raymarcher"
                     {
                         //SHADING
                         float3 n = getNormal(p);
-                        result = fixed4(n,1);
+                        float f = fresnel(n, rd);
+                        result = fixed4(f,f,f,1);
                         break;
                     }
                     t += d;

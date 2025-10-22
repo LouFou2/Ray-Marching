@@ -141,12 +141,7 @@ float GetShapeDistance(Shape shape, float3 eye) {
 
     return maxDst;
 }
-float GetDisplacedDistance(Shape shape, float3 eye){
-    float dist = GetShapeDistance(shape, eye);
-    // displacement stuff here
-    return dist;
 
-}
 
 float4 SceneInfo(float3 eye) {
     float globalDst = maxDst;
