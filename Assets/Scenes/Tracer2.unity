@@ -144,7 +144,7 @@ Transform:
   m_GameObject: {fileID: 402423412}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 6.02}
   m_LocalScale: {x: 0.46, y: 0.46, z: 0.46}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -184,10 +184,7 @@ MonoBehaviour:
   _shader: {fileID: 4800000, guid: 5b542594f478cee45984eaa59133a0af, type: 3}
   _maxDistance: 50
   _spheres:
-  - {x: -3.46, y: 0, z: 8.34, w: 2}
-  - {x: 0.32, y: 0, z: 8.34, w: 2}
-  - {x: 3.9, y: 0, z: 8.34, w: 2}
-  - {x: 7.55, y: 0, z: 8.34, w: 2}
+  - {x: 0, y: 0, z: 5, w: 0.5}
 --- !u!81 &776795850
 AudioListener:
   m_ObjectHideFlags: 0
@@ -291,12 +288,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e5a49dba74fe6489cc533cf5607d90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cam: {fileID: 0}
+  cam: {fileID: 776795851}
   controlledSphereTransform: {fileID: 402423414}
   dampFollowSpeed: 0.3
   moveSpeed: 0
   moveDirection: {x: 0, y: 0, z: 0}
-  cursorDepth: 6.5
+  cursorDepth: 6
 --- !u!4 &1058997079
 Transform:
   m_ObjectHideFlags: 0
@@ -312,10 +309,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1942873833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1942873835}
+  - component: {fileID: 1942873834}
+  m_Layer: 0
+  m_Name: Tracer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1942873834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942873833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 364c9e2759a62f441b7191c3ffeab048, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  raymarchCamScript: {fileID: 776795849}
+  controlTipTransform: {fileID: 402423414}
+  distanceBetweenSpawns: 1
+  sphereMoveSpeed: 3
+  scaleNoiseFactor: 0.2
+  _spheresData:
+  - {x: 0, y: 0, z: -4.05, w: 2}
+--- !u!4 &1942873835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942873833}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 776795852}
   - {fileID: 1058997079}
+  - {fileID: 1942873835}
   - {fileID: 402423414}
