@@ -185,6 +185,9 @@ MonoBehaviour:
   _maxDistance: 50
   _sphere1: {x: 0, y: 0, z: 10, w: 2}
   _sphere2: {x: -3.34, y: 0, z: 10.47, w: 2.29}
+  _spheres:
+  - {x: -3.46, y: 0, z: 8.34, w: 2}
+  - {x: 0.32, y: 0, z: 8.34, w: 2}
 --- !u!81 &776795850
 AudioListener:
   m_ObjectHideFlags: 0

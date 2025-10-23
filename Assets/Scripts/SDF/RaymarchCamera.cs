@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
@@ -40,6 +41,9 @@ public class RaymarchCamera : MonoBehaviour
     public Vector4 _sphere1; //*** ultimately this is what I want to pass in from another script, probably also a list, so that might change the shader script's setup
     public Vector4 _sphere2;
 
+    public List<Vector4> _spheres = new List<Vector4>();
+    ComputeBuffer buffer;
+
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (!_raymarchMaterial)
@@ -48,6 +52,22 @@ public class RaymarchCamera : MonoBehaviour
             return;
         }
 
+        buffer = new ComputeBuffer(_spheres.Count, SphereData.GetSize());
+
+        SphereData[] sphereDatas = new SphereData[_spheres.Count];
+        for (int i = 0; i < _spheres.Count; i++)
+        {
+            SphereData s = new SphereData()
+            {
+                sphereInfo = _spheres[i]
+            };
+            sphereDatas[i] = s;
+        }
+
+        buffer.SetData(sphereDatas);
+
+        _raymarchMaterial.SetBuffer("_spheresBuffer", buffer);
+        _raymarchMaterial.SetInt("_sphereCount", _spheres.Count);
         _raymarchMaterial.SetMatrix("_CamFrustum", CamFrustum(_camera));
         _raymarchMaterial.SetMatrix("_CamToWorld", _camera.cameraToWorldMatrix);
         _raymarchMaterial.SetFloat("_maxDistance", _maxDistance);
@@ -98,5 +118,24 @@ public class RaymarchCamera : MonoBehaviour
         frustum.SetRow(3, BL);
 
         return frustum;
+    }
+
+    private void OnDisable()
+    {
+        if (buffer != null)
+        {
+            buffer.Release();
+            buffer = null;
+        }
+    }
+}
+
+public struct SphereData
+{
+    public Vector4 sphereInfo;
+
+    public static int GetSize()
+    {
+        return sizeof (float) * 4 ;
     }
 }

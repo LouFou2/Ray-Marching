@@ -37,6 +37,14 @@ Shader "Hidden/Raymarcher"
                 float3 ray : TEXCOORD1;
             };
 
+            struct sphereData
+            {
+                float4 sphereInfo;
+            };
+
+            StructuredBuffer<sphereData> _spheresBuffer; //this can be used like a "list" to iterate
+            int _sphereCount;
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -74,9 +82,17 @@ Shader "Hidden/Raymarcher"
 
             float distanceField(float3 p)
             {
-                float sphere1 = sdSphere(p - _sphere1.xyz, _sphere1.w);
-                float sphere2 = sdSphere(p - _sphere2.xyz, _sphere2.w);
-                float addedSpheres = smoothUnion(sphere1, sphere2, 0.7); // 0.7 is the smoothing strength, change if needed
+                //float sphere1 = sdSphere(p - _sphere1.xyz, _sphere1.w);
+                //float sphere2 = sdSphere(p - _sphere2.xyz, _sphere2.w);
+                //float addedSpheres = smoothUnion(sphere1, sphere2, 0.7); // 0.7 is the smoothing strength, change if needed
+                
+                float addedSpheres = sdSphere(p - _spheresBuffer[0].sphereInfo.xyz, _spheresBuffer[0].sphereInfo.w);
+                for(int i = 1; i < _sphereCount; i++) //*** might have to use a set int instead of _spheresBuffer.Length
+                {
+                    float nextSphere = sdSphere(p - _spheresBuffer[i].sphereInfo.xyz, _spheresBuffer[i].sphereInfo.w);
+                    addedSpheres = smoothUnion(addedSpheres, nextSphere, 0.7);
+                }
+                
                 return addedSpheres;
             }
 
@@ -87,6 +103,7 @@ Shader "Hidden/Raymarcher"
                     distanceField(p + offset.xyy) - distanceField(p - offset.xyy),
                     distanceField(p + offset.yxy) - distanceField(p - offset.yxy),
                     distanceField(p + offset.yyx) - distanceField(p - offset.yyx));
+
                 return normalize(n);    
             }
 
