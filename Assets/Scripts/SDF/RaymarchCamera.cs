@@ -38,8 +38,8 @@ public class RaymarchCamera : MonoBehaviour
 
     public float _maxDistance;
 
-    public Vector4 _sphere1; //*** ultimately this is what I want to pass in from another script, probably also a list, so that might change the shader script's setup
-    public Vector4 _sphere2;
+    //public Vector4 _sphere1; //*** ultimately this is what I want to pass in from another script, probably also a list, so that might change the shader script's setup
+    //public Vector4 _sphere2;
 
     public List<Vector4> _spheres = new List<Vector4>();
     ComputeBuffer buffer;
@@ -52,7 +52,15 @@ public class RaymarchCamera : MonoBehaviour
             return;
         }
 
-        buffer = new ComputeBuffer(_spheres.Count, SphereData.GetSize());
+        //buffer = new ComputeBuffer(_spheres.Count, SphereData.GetSize());
+        // Recreate buffer only if needed
+        if (buffer == null || buffer.count != _spheres.Count)
+        {
+            if (buffer != null)
+                buffer.Release();
+
+            buffer = new ComputeBuffer(_spheres.Count, SphereData.GetSize());
+        }
 
         SphereData[] sphereDatas = new SphereData[_spheres.Count];
         for (int i = 0; i < _spheres.Count; i++)
@@ -71,8 +79,6 @@ public class RaymarchCamera : MonoBehaviour
         _raymarchMaterial.SetMatrix("_CamFrustum", CamFrustum(_camera));
         _raymarchMaterial.SetMatrix("_CamToWorld", _camera.cameraToWorldMatrix);
         _raymarchMaterial.SetFloat("_maxDistance", _maxDistance);
-        _raymarchMaterial.SetVector("_sphere1", _sphere1);
-        _raymarchMaterial.SetVector("_sphere2", _sphere2);
 
         RenderTexture.active = destination;
         GL.PushMatrix();

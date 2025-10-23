@@ -21,8 +21,6 @@ Shader "Hidden/Raymarcher"
             sampler2D _MainTex;
             uniform float4x4 _CamFrustum, _CamToWorld;
             uniform float _maxDistance;
-            uniform float4 _sphere1;
-            uniform float4 _sphere2;
 
             struct appdata
             {
@@ -82,12 +80,8 @@ Shader "Hidden/Raymarcher"
 
             float distanceField(float3 p)
             {
-                //float sphere1 = sdSphere(p - _sphere1.xyz, _sphere1.w);
-                //float sphere2 = sdSphere(p - _sphere2.xyz, _sphere2.w);
-                //float addedSpheres = smoothUnion(sphere1, sphere2, 0.7); // 0.7 is the smoothing strength, change if needed
-                
                 float addedSpheres = sdSphere(p - _spheresBuffer[0].sphereInfo.xyz, _spheresBuffer[0].sphereInfo.w);
-                for(int i = 1; i < _sphereCount; i++) //*** might have to use a set int instead of _spheresBuffer.Length
+                for(int i = 1; i < _sphereCount; i++) 
                 {
                     float nextSphere = sdSphere(p - _spheresBuffer[i].sphereInfo.xyz, _spheresBuffer[i].sphereInfo.w);
                     addedSpheres = smoothUnion(addedSpheres, nextSphere, 0.7);
