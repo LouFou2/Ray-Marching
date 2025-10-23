@@ -84,7 +84,7 @@ Shader "Hidden/Raymarcher"
                 for(int i = 1; i < _sphereCount; i++) 
                 {
                     float nextSphere = sdSphere(p - _spheresBuffer[i].sphereInfo.xyz, _spheresBuffer[i].sphereInfo.w);
-                    addedSpheres = smoothUnion(addedSpheres, nextSphere, 0.7);
+                    addedSpheres = smoothUnion(addedSpheres, nextSphere, 0.3);
                 }
                 
                 return addedSpheres;

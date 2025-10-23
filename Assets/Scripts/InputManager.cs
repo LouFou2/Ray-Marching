@@ -5,7 +5,7 @@ public class InputManager : MonoBehaviour
     //This will use the mouse input to move a slime ball
     // It depends on the orientation of the camera how the xy movement should be translated in 3d space
     [SerializeField] private Camera cam;
-    [SerializeField] private Transform controlledSphereTransform;
+    [SerializeField] private Transform controllerTransform;
     [SerializeField] private float dampFollowSpeed = 1f;
     Vector3 mousePosition = Vector3.zero;
     Vector3 prevPosition = Vector3.zero; //previous position of object
@@ -19,23 +19,29 @@ public class InputManager : MonoBehaviour
     void Start()
     {
         mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
-        prevPosition = new Vector3(mousePosition.x, mousePosition.y, controlledSphereTransform.position.z);
+        prevPosition = new Vector3(mousePosition.x, mousePosition.y, controllerTransform.position.z);
     }
     void Update()
     {
-        controlledSphereTransform.rotation = cam.transform.rotation;
+        controllerTransform.rotation = cam.transform.rotation;
 
         //get mouse movement
         mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
 
-        Vector3 targetPosition = new Vector3(mousePosition.x, mousePosition.y, controlledSphereTransform.position.z);
+        Vector3 targetPosition = new Vector3(mousePosition.x, mousePosition.y, controllerTransform.position.z);
 
         moveDirection = (targetPosition - prevPosition).normalized; //***might want to use this in shader later?
 
         //I would like to actually move the sphere along the objects local axis, so the "camera orientation" changes the direction
-        controlledSphereTransform.position = Vector3.Lerp(controlledSphereTransform.position, targetPosition, dampFollowSpeed);
+        controllerTransform.position = Vector3.Lerp(controllerTransform.position, targetPosition, dampFollowSpeed);
 
-        moveSpeed = Vector3.Distance(controlledSphereTransform.position, prevPosition); //***might also want this for shader
+        moveSpeed = Vector3.Distance(controllerTransform.position, prevPosition); //***might also want this for shader
+
+        if (Input.GetKey("escape"))
+        {
+            Application.Quit();
+        }
+
 
     }
 }

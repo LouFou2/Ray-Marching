@@ -184,7 +184,7 @@ MonoBehaviour:
   _shader: {fileID: 4800000, guid: 5b542594f478cee45984eaa59133a0af, type: 3}
   _maxDistance: 50
   _spheres:
-  - {x: 0, y: 0, z: 5, w: 0.5}
+  - {x: 0, y: 0, z: 5, w: 0.29}
 --- !u!81 &776795850
 AudioListener:
   m_ObjectHideFlags: 0
@@ -289,8 +289,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 776795851}
-  controlledSphereTransform: {fileID: 402423414}
-  dampFollowSpeed: 0.3
+  controllerTransform: {fileID: 402423414}
+  dampFollowSpeed: 1
   moveSpeed: 0
   moveDirection: {x: 0, y: 0, z: 0}
   cursorDepth: 6
