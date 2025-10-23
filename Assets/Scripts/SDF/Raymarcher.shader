@@ -59,15 +59,24 @@ Shader "Hidden/Raymarcher"
                 return length(p) - s;
             }
 
+            //this is the most basic "union" (adding both)
             float unionSDF(float distA, float distB) {
                 return min(distA, distB);
+            }
+
+            // polynomial smooth min
+            // from https://www.iquilezles.org/www/articles/smin/smin.htm
+            float smoothUnion(float distA, float distB, float strength)
+            {
+                float h = clamp(0.5 + 0.5 * (distB - distA) / strength, 0.0, 1.0);
+                return lerp(distB, distA, h) - strength * h * (1.0 - h);
             }
 
             float distanceField(float3 p)
             {
                 float sphere1 = sdSphere(p - _sphere1.xyz, _sphere1.w);
                 float sphere2 = sdSphere(p - _sphere2.xyz, _sphere2.w);
-                float addedSpheres = unionSDF(sphere1, sphere2);
+                float addedSpheres = smoothUnion(sphere1, sphere2, 0.7); // 0.7 is the smoothing strength, change if needed
                 return addedSpheres;
             }
 
