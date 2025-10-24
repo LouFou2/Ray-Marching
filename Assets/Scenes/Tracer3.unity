@@ -258,6 +258,7 @@ MonoBehaviour:
   raymarchCompute: {fileID: 7200000, guid: 1c8af9b6494c05d4887aa19d212e3eb8, type: 3}
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxDistance: 50
+  skyBox: {fileID: 8900000, guid: f077e5107a8e2aa4a9241f434e5c815c, type: 3}
   spheres:
   - {x: 0, y: 0, z: 10, w: 0.61}
 --- !u!1 &1058997077
@@ -358,7 +359,7 @@ MonoBehaviour:
   controlTipTransform: {fileID: 402423414}
   distanceBetweenSpawns: 1
   sphereMoveSpeed: 3
-  scaleNoiseFactor: 0.2
+  inflateSpeed: 2
   _spheresData: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

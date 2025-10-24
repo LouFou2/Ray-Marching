@@ -122,8 +122,15 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         {
             float3 n = getNormal(p);
             float f = fresnel(n, rayDir);
+            float4 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, n, 0);
+            reflectCol = saturate(pow(reflectCol, 2));
 
-            col = float3(f, f, f);
+            float3 basicCol = float3(0,0,0);
+
+            float3 lerpedCol = lerp(basicCol, reflectCol, f);
+
+            col = lerpedCol;
+            //col = float3(f, f, f);
             break;
         }
 

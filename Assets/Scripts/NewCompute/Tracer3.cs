@@ -8,7 +8,7 @@ public class Tracer3 : MonoBehaviour
     [SerializeField] Transform controlTipTransform;
     [SerializeField] float distanceBetweenSpawns = 1f;
     [SerializeField] float sphereMoveSpeed = 3f;
-    [SerializeField] float scaleNoiseFactor = 0.2f;
+    [SerializeField] float inflateSpeed = 10f;
 
     float originalScale;
     Vector3 previousPos;
@@ -35,6 +35,8 @@ public class Tracer3 : MonoBehaviour
                 controlTipTransform.position.z,
                 originalScale);
 
+        int lastIndex = _spheresData.Count - 1;
+
         //at the moment i am limiting the total amount of spheres (128), but only because frame rate drops a lot... I would like to optimise this issue away though
         if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenSpawns && _spheresData.Count <= 255 && Input.GetMouseButton(0))
         {
@@ -50,6 +52,11 @@ public class Tracer3 : MonoBehaviour
             _spheresData.Add(newData);
 
             PassDataToCam(_spheresData);
+        }
+        if (Vector3.Distance(previousPos, controlTipTransform.position) < distanceBetweenSpawns && _spheresData.Count > 1 && Input.GetMouseButton(0))
+        {
+            _spheresData[lastIndex] += new Vector4(0,0,0, Time.deltaTime * inflateSpeed);
+            distanceBetweenSpawns = _spheresData[lastIndex].w;
         }
 
         if (Input.GetMouseButton(1))
