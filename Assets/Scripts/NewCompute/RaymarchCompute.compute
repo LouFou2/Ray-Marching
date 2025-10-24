@@ -15,6 +15,9 @@ float4x4 _CamToWorld;   // camera to world matrix
 float3 _CameraPos;
 float _MaxDistance;
 
+TextureCube<float4> _SkyBoxCubeMap;
+SamplerState _LinearClamp; // Or other sampler state
+
 RWTexture2D<float4> _Result; // output
 float2 _Resolution;          // width, height (set from C#)
 
@@ -95,6 +98,9 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     float3 rayOrigin = _CameraPos;
 
+    float4 bgColor = _SkyBoxCubeMap.SampleLevel(_LinearClamp, rayDir, 0);
+
+
     // Raymarch
     float3 col = float3(0,0,0);
     const int MAX_STEPS = 128;
@@ -104,7 +110,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         if (t > _MaxDistance)
         {
-            col = abs(rayDir); // show direction as RGB (use abs to keep it positive)
+            //col = abs(rayDir); // show direction as RGB (use abs to keep it positive)
+            col = bgColor.xyz;
             break;
         }
 
@@ -115,6 +122,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         {
             float3 n = getNormal(p);
             float f = fresnel(n, rayDir);
+
             col = float3(f, f, f);
             break;
         }

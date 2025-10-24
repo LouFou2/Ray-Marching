@@ -9,6 +9,8 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] Shader blitShader;
     [SerializeField] float maxDistance = 20f;
 
+    public Cubemap skyBox;
+
     public List<Vector4> spheres = new List<Vector4>();
 
     Camera cam;
@@ -52,6 +54,7 @@ public class RaymarchComputeController : MonoBehaviour
         int kernel = raymarchCompute.FindKernel("CSMain");
 
         // Set resources
+        raymarchCompute.SetTexture(kernel, "_SkyBoxCubeMap", skyBox);
         raymarchCompute.SetTexture(kernel, "_Result", target);
         raymarchCompute.SetBuffer(kernel, "_Spheres", sphereBuffer);
         raymarchCompute.SetInt("_SphereCount", spheres.Count);
