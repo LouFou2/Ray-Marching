@@ -1,0 +1,111 @@
+// RaymarchCompute.compute
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+
+struct SphereData
+{
+    float4 sphereInfo; // xyz = position, w = radius
+};
+
+StructuredBuffer<SphereData> _Spheres;
+int _SphereCount;
+
+float4x4 _CamFrustum;
+float4x4 _CamToWorld;
+float3 _CameraPos;
+float _MaxDistance;
+
+RWTexture2D<float4> _Result; // output
+
+// ==========================================================
+// Distance functions
+// ==========================================================
+float sdSphere(float3 p, float s)
+{
+    return length(p) - s;
+}
+
+float smoothUnion(float distA, float distB, float strength)
+{
+    float h = clamp(0.5 + 0.5 * (distB - distA) / strength, 0.0, 1.0);
+    return lerp(distB, distA, h) - strength * h * (1.0 - h);
+}
+
+float distanceField(float3 p)
+{
+    float d = sdSphere(p - _Spheres[0].sphereInfo.xyz, _Spheres[0].sphereInfo.w);
+    for (int i = 1; i < _SphereCount; i++)
+    {
+        float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
+        d = smoothUnion(d, next, 0.7);
+    }
+    return d;
+}
+
+float3 getNormal(float3 p)
+{
+    const float2 e = float2(0.001, 0);
+    float3 n = float3(
+        distanceField(p + e.xyy) - distanceField(p - e.xyy),
+        distanceField(p + e.yxy) - distanceField(p - e.yxy),
+        distanceField(p + e.yyx) - distanceField(p - e.yyx)
+    );
+    return normalize(n);
+}
+
+float fresnel(float3 n, float3 rd)
+{
+    float d = 1 - saturate(abs(dot(n, rd)));
+    return d;
+}
+
+// ==========================================================
+// Raymarch kernel
+// ==========================================================
+
+[numthreads(8,8,1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint2 pixel = id.xy;
+    uint width, height;
+    _Result.GetDimensions(width, height);
+    pixel = id.xy / float2(width,height) * 2 - 1;
+
+    if (pixel.x >= width || pixel.y >= height) return;
+
+    // Build ray direction
+    float2 uv = ((float2)pixel / float2(width, height)) * 2 - 1;
+    float3 rayDir = normalize(
+        mul(_CamToWorld, float4(normalize(
+            mul(_CamFrustum, float4(uv, 1, 0)).xyz
+        ), 0)).xyz
+    );
+
+    float3 rayOrigin = _CameraPos;
+
+    // Raymarch
+    float3 col = float3(0, 0, 0);
+    const int MAX_STEPS = 256;
+    float t = 0;
+
+    for (int i = 0; i < MAX_STEPS; i++)
+    {
+        if (t > _MaxDistance) break;
+
+        float3 p = rayOrigin + rayDir * t;
+        float d = distanceField(p);
+
+        if (d < 0.001)
+        {
+            float3 n = getNormal(p);
+            float f = fresnel(n, rayDir);
+            col = f.xxx;
+            break;
+        }
+
+        t += d;
+    }
+
+    _Result[pixel] = float4(col, 1);
+}
