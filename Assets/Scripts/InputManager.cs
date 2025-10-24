@@ -6,28 +6,45 @@ public class InputManager : MonoBehaviour
     // It depends on the orientation of the camera how the xy movement should be translated in 3d space
     [SerializeField] private Camera cam;
     [SerializeField] private Transform controllerTransform;
-    [SerializeField] private float dampFollowSpeed = 1f;
-    Vector3 mousePosition = Vector3.zero;
-    Vector3 prevPosition = Vector3.zero; //previous position of object
+    Vector3 objectTargetPos = Vector3.zero;
 
+    [SerializeField] float mouseSensitivity = 100f;
     [SerializeField] float cursorDepth = 5f;
+    [SerializeField] float moveSpeed = 12f;
+    [SerializeField] float upDownSpeed = 100f;
 
-    void Start()
+    float xRotation;
+    float yRotation;
+    
+    
+    private void Start()
     {
-        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
-        prevPosition = new Vector3(mousePosition.x, mousePosition.y, controllerTransform.position.z);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
+
     void Update()
     {
-        controllerTransform.rotation = cam.transform.rotation;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
-        //get mouse movement
-        mousePosition = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
+        // rotating the camera with the mouse
+        xRotation -= mouseY;
+        yRotation += mouseX;
 
-        Vector3 targetPosition = new Vector3(mousePosition.x, mousePosition.y, controllerTransform.position.z);
+        cam.transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
 
-        //I would like to actually move the sphere along the objects local axis, so the "camera orientation" changes the direction
-        controllerTransform.position = targetPosition;
+        //moving camera with wasd
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
+        float moveY = Input.GetKey(KeyCode.Space) ? Time.deltaTime * upDownSpeed : Input.GetKey(KeyCode.LeftShift) ? -(Time.deltaTime * upDownSpeed) : 0 ;
+
+        Vector3 move = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ ;
+        cam.transform.position += move * moveSpeed * Time.deltaTime;
+
+        //use mouse movement for setting the control object's target position
+        objectTargetPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
+        controllerTransform.position = objectTargetPos;
 
         if (Input.GetKey("escape"))
         {

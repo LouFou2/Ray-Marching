@@ -291,10 +291,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 776795851}
   controllerTransform: {fileID: 402423414}
-  dampFollowSpeed: 1
-  moveSpeed: 0
-  moveDirection: {x: 0, y: 0, z: 0}
-  cursorDepth: 6
+  mouseSensitivity: 100
+  cursorDepth: 10
+  moveSpeed: 12
+  upDownSpeed: 80
 --- !u!4 &1058997079
 Transform:
   m_ObjectHideFlags: 0
