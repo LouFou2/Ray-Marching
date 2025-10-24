@@ -19,8 +19,8 @@ public class InputManager : MonoBehaviour
     
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        /*Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;*/
     }
 
     void Update()
@@ -37,9 +37,9 @@ public class InputManager : MonoBehaviour
         //moving camera with wasd
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
-        float moveY = Input.GetKey(KeyCode.Space) ? Time.deltaTime * upDownSpeed : Input.GetKey(KeyCode.LeftShift) ? -(Time.deltaTime * upDownSpeed) : 0 ;
+        float moveY = Input.GetKey(KeyCode.Space) ? Time.deltaTime * upDownSpeed : Input.GetKey(KeyCode.LeftShift) ? -(Time.deltaTime * upDownSpeed) : 0;
 
-        Vector3 move = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ ;
+        Vector3 move = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ;
         cam.transform.position += move * moveSpeed * Time.deltaTime;
 
         //use mouse movement for setting the control object's target position

@@ -39,7 +39,7 @@ float distanceField(float3 p)
     for (int i = 1; i < _SphereCount; i++)
     {
         float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
-        d = smoothUnion(d, next, 0.45);
+        d = smoothUnion(d, next, 0.55);
     }
     return d;
 }

@@ -294,7 +294,7 @@ MonoBehaviour:
   mouseSensitivity: 100
   cursorDepth: 10
   moveSpeed: 12
-  upDownSpeed: 80
+  upDownSpeed: 60
 --- !u!4 &1058997079
 Transform:
   m_ObjectHideFlags: 0
