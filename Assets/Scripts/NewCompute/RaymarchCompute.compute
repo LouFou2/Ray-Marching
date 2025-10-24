@@ -1,6 +1,5 @@
 // RaymarchCompute.compute
 #pragma kernel CSMain
-
 #include "UnityCG.cginc"
 
 struct SphereData
@@ -11,15 +10,16 @@ struct SphereData
 StructuredBuffer<SphereData> _Spheres;
 int _SphereCount;
 
-float4x4 _CamFrustum;
-float4x4 _CamToWorld;
+float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
+float4x4 _CamToWorld;   // camera to world matrix
 float3 _CameraPos;
 float _MaxDistance;
 
 RWTexture2D<float4> _Result; // output
+float2 _Resolution;          // width, height (set from C#)
 
 // ==========================================================
-// Distance functions
+// Distance functions (same as before)
 // ==========================================================
 float sdSphere(float3 p, float s)
 {
@@ -34,11 +34,12 @@ float smoothUnion(float distA, float distB, float strength)
 
 float distanceField(float3 p)
 {
+    if (_SphereCount == 0) return 1e6;
     float d = sdSphere(p - _Spheres[0].sphereInfo.xyz, _Spheres[0].sphereInfo.w);
     for (int i = 1; i < _SphereCount; i++)
     {
         float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
-        d = smoothUnion(d, next, 0.7);
+        d = smoothUnion(d, next, 0.3);
     }
     return d;
 }
@@ -61,37 +62,51 @@ float fresnel(float3 n, float3 rd)
 }
 
 // ==========================================================
-// Raymarch kernel
+// Compute kernel
 // ==========================================================
-
 [numthreads(8,8,1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    uint2 pixel = id.xy;
-    uint width, height;
-    _Result.GetDimensions(width, height);
-    pixel = id.xy / float2(width,height) * 2 - 1;
+    // bounds check using resolution passed from C#
+    if (id.x >= (uint)_Resolution.x || id.y >= (uint)_Resolution.y) return;
 
-    if (pixel.x >= width || pixel.y >= height) return;
+    // pixel-centered UV [0..1]
+    float2 pixel = float2(id.xy) + 0.5;
+    float2 uv = pixel / _Resolution;
 
-    // Build ray direction
-    float2 uv = ((float2)pixel / float2(width, height)) * 2 - 1;
-    float3 rayDir = normalize(
-        mul(_CamToWorld, float4(normalize(
-            mul(_CamFrustum, float4(uv, 1, 0)).xyz
-        ), 0)).xyz
-    );
+    // flip Y because RWTexture2D indexing is origin top-left vs UV origin bottom-left
+    uv.y = 1.0 - uv.y;
+
+    // Interpolate ray direction across the frustum corners
+    // read frustum rows (each row is a float4 where .xyz is a direction)
+    float3 TL = _CamFrustum[0].xyz;
+    float3 TR = _CamFrustum[1].xyz;
+    float3 BR = _CamFrustum[2].xyz;
+    float3 BL = _CamFrustum[3].xyz;
+
+    // Interpolate horizontally across top and bottom, then vertically between them
+    float3 top = lerp(TL, TR, uv.x);
+    float3 bottom = lerp(BL, BR, uv.x);
+    float3 rayView = lerp(top, bottom, uv.y);
+
+    // Normalize and transform direction to world space
+    rayView = normalize(rayView);
+    float3 rayDir = normalize( mul(_CamToWorld, float4(rayView, 0)).xyz );
 
     float3 rayOrigin = _CameraPos;
 
     // Raymarch
-    float3 col = float3(0, 0, 0);
+    float3 col = float3(0,0,0);
     const int MAX_STEPS = 256;
-    float t = 0;
+    float t = 0.0;
 
     for (int i = 0; i < MAX_STEPS; i++)
     {
-        if (t > _MaxDistance) break;
+        if (t > _MaxDistance)
+        {
+            col = abs(rayDir); // show direction as RGB (use abs to keep it positive)
+            break;
+        }
 
         float3 p = rayOrigin + rayDir * t;
         float d = distanceField(p);
@@ -100,12 +115,13 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         {
             float3 n = getNormal(p);
             float f = fresnel(n, rayDir);
-            col = f.xxx;
+            col = float3(f, f, f);
             break;
         }
 
-        t += d;
+        // Avoid infinite loop if distanceField returns negative or zero unexpectedly.
+        t += max(d, 1e-5);
     }
 
-    _Result[pixel] = float4(col, 1);
+    _Result[int2(id.xy)] = float4(col, 1.0);
 }

@@ -259,7 +259,7 @@ MonoBehaviour:
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxDistance: 50
   spheres:
-  - {x: 0, y: 0, z: 10, w: 2}
+  - {x: 0, y: 0, z: 10, w: 0.61}
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
