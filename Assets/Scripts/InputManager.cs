@@ -10,10 +10,6 @@ public class InputManager : MonoBehaviour
     Vector3 mousePosition = Vector3.zero;
     Vector3 prevPosition = Vector3.zero; //previous position of object
 
-    //***These two properties could be useful for shader stuff
-    public float moveSpeed = 0f;
-    public Vector3 moveDirection = Vector3.zero;
-
     [SerializeField] float cursorDepth = 5f;
 
     void Start()
@@ -30,12 +26,8 @@ public class InputManager : MonoBehaviour
 
         Vector3 targetPosition = new Vector3(mousePosition.x, mousePosition.y, controllerTransform.position.z);
 
-        moveDirection = (targetPosition - prevPosition).normalized; //***might want to use this in shader later?
-
         //I would like to actually move the sphere along the objects local axis, so the "camera orientation" changes the direction
-        controllerTransform.position = Vector3.Lerp(controllerTransform.position, targetPosition, dampFollowSpeed);
-
-        moveSpeed = Vector3.Distance(controllerTransform.position, prevPosition); //***might also want this for shader
+        controllerTransform.position = targetPosition;
 
         if (Input.GetKey("escape"))
         {

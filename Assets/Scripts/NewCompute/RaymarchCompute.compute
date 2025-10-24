@@ -39,7 +39,7 @@ float distanceField(float3 p)
     for (int i = 1; i < _SphereCount; i++)
     {
         float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
-        d = smoothUnion(d, next, 0.3);
+        d = smoothUnion(d, next, 0.45);
     }
     return d;
 }
@@ -97,7 +97,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     // Raymarch
     float3 col = float3(0,0,0);
-    const int MAX_STEPS = 256;
+    const int MAX_STEPS = 128;
     float t = 0.0;
 
     for (int i = 0; i < MAX_STEPS; i++)
