@@ -24,6 +24,7 @@ public class Tracer3 : MonoBehaviour
         previousPos = controlTipTransform.position;
 
         _spheresData = raymarchCamScript.spheres;
+
         controlSphereData = _spheresData[0];
         originalScale = controlSphereData.w;
         distanceBetweenSpawns = originalScale * 1.5f;
@@ -67,7 +68,11 @@ public class Tracer3 : MonoBehaviour
         if (Input.GetMouseButton(1))
         {
             _spheresData.Clear();
-            _spheresData.Add(controlSphereData);
+            _spheresData.Add(new Vector4(
+                controlTipTransform.position.x,
+                controlTipTransform.position.y,
+                controlTipTransform.position.z,
+                originalScale));
             PassDataToCam(_spheresData);
         }
     }
