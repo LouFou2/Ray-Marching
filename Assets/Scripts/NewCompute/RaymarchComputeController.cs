@@ -12,7 +12,6 @@ public class RaymarchComputeController : MonoBehaviour
     public Cubemap skyBox;
 
     public List<Vector4> spheres = new List<Vector4>();
-    int currentSphereCount = 0;
 
     Camera cam;
     Material blitMat;
@@ -62,18 +61,14 @@ public class RaymarchComputeController : MonoBehaviour
         }
 
         InitRenderTexture();
-        if (currentSphereCount != spheres.Count) UpdateSphereBuffer();
+        UpdateSphereBuffer();
 
         // Set resources
         raymarchCompute.SetTexture(mainKernel, "_Result", target);
         raymarchCompute.SetFloat("time", time);
 
-        //only need to pass in initial "spawned sphere" data:
-        if (currentSphereCount != spheres.Count)
-        {
-            raymarchCompute.SetBuffer(mainKernel, "_Spheres", sphereBuffer);
-            raymarchCompute.SetInt("_SphereCount", spheres.Count);
-        }
+        raymarchCompute.SetBuffer(mainKernel, "_Spheres", sphereBuffer);
+        raymarchCompute.SetInt("_SphereCount", spheres.Count);
         
         // Pass matrices (CamFrustum rows must match the order used in compute shader)
         raymarchCompute.SetMatrix("_CamFrustum", CamFrustum(cam));
@@ -100,10 +95,7 @@ public class RaymarchComputeController : MonoBehaviour
             Graphics.Blit(target, destination);
         }
     }
-    void UpdateSpherePositions()
-    {
-        // should i update the sphere positions in this script's buffer, as it gets passed from here to the compute shader
-    }
+    
     void UpdateSphereBuffer()
     {
         if (spheres == null || spheres.Count == 0)
@@ -117,7 +109,6 @@ public class RaymarchComputeController : MonoBehaviour
             if (sphereBuffer != null) sphereBuffer.Release();
             sphereBuffer = new ComputeBuffer(spheres.Count, sizeof(float) * 4);
         }
-
         sphereBuffer.SetData(spheres);
     }
 

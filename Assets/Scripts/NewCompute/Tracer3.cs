@@ -27,6 +27,8 @@ public class Tracer3 : MonoBehaviour
         controlSphereData = _spheresData[0];
         originalScale = controlSphereData.w;
         distanceBetweenSpawns = originalScale * 1.5f;
+
+        PassDataToCam(_spheresData);
     }
 
     void Update()
