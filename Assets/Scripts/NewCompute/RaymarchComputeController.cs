@@ -7,7 +7,8 @@ public class RaymarchComputeController : MonoBehaviour
 {
     [SerializeField] ComputeShader raymarchCompute;
     [SerializeField] Shader blitShader;
-    [SerializeField] float maxDistance = 20f;
+    [SerializeField] float maxRenderDistance = 20f;
+    [SerializeField] float maxStretchDistance = 3f;
 
     public Cubemap skyBox;
 
@@ -21,16 +22,21 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] float time = 0;
 
     int mainKernel;
+    int updateKernel;
 
     void Awake()
     {
         cam = GetComponent<Camera>();
         if (blitShader) blitMat = new Material(blitShader);
        
-        raymarchCompute.SetFloat("maxStretchDist", 0f);
+        raymarchCompute.SetFloat("maxStretchDist", maxStretchDistance);
 
         mainKernel = raymarchCompute.FindKernel("CSMain");
+        updateKernel = raymarchCompute.FindKernel("UpdateSpheres");
+
         raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
+
+        InitSphereBuffer(); // initialize spheres once at start
 
     }
 
@@ -52,7 +58,7 @@ public class RaymarchComputeController : MonoBehaviour
 
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        time += Time.deltaTime;
+        time = Application.isPlaying ? Time.deltaTime : 0.02f;
 
         if (raymarchCompute == null)
         {
@@ -61,20 +67,20 @@ public class RaymarchComputeController : MonoBehaviour
         }
 
         InitRenderTexture();
-        UpdateSphereBuffer();
+        UpdateSphereBufferIfCountChanged();
+
+        raymarchCompute.SetFloat("time", time);
+        raymarchCompute.Dispatch(updateKernel, spheres.Count, 1, 1);
 
         // Set resources
         raymarchCompute.SetTexture(mainKernel, "_Result", target);
-        raymarchCompute.SetFloat("time", time);
-
-        raymarchCompute.SetBuffer(mainKernel, "_Spheres", sphereBuffer);
         raymarchCompute.SetInt("_SphereCount", spheres.Count);
         
         // Pass matrices (CamFrustum rows must match the order used in compute shader)
         raymarchCompute.SetMatrix("_CamFrustum", CamFrustum(cam));
         raymarchCompute.SetMatrix("_CamToWorld", cam.cameraToWorldMatrix);
         raymarchCompute.SetVector("_CameraPos", cam.transform.position);
-        raymarchCompute.SetFloat("_MaxDistance", maxDistance);
+        raymarchCompute.SetFloat("_MaxDistance", maxRenderDistance);
 
         // Also pass resolution explicitly
         raymarchCompute.SetVector("_Resolution", new Vector4(target.width, target.height, 0, 0));
@@ -94,9 +100,35 @@ public class RaymarchComputeController : MonoBehaviour
         {
             Graphics.Blit(target, destination);
         }
+
     }
-    
-    void UpdateSphereBuffer()
+    public void InitSphereBuffer()
+    {
+        if (spheres == null || spheres.Count == 0) return;
+        if (sphereBuffer != null) sphereBuffer.Release();
+
+        sphereBuffer = new ComputeBuffer(spheres.Count, sizeof(float) * 4);
+        sphereBuffer.SetData(spheres);
+
+        raymarchCompute.SetBuffer(mainKernel, "_Spheres", sphereBuffer);
+        raymarchCompute.SetBuffer(updateKernel, "_Spheres", sphereBuffer);
+        raymarchCompute.SetInt("_SphereCount", spheres.Count);
+    }
+
+    void UpdateSphereBufferIfCountChanged()
+    {
+        if (sphereBuffer == null || sphereBuffer.count != spheres.Count)
+            InitSphereBuffer();
+    }
+    public void UpdateFirstSphere(Vector4 firstSphereData)
+    {
+        if (sphereBuffer == null) return;
+        // Write only one element (index 0) into the GPU buffer
+        sphereBuffer.SetData(new Vector4[] { firstSphereData }, 0, 0, 1);
+    }
+
+
+    /*void UpdateSphereBuffer()
     {
         if (spheres == null || spheres.Count == 0)
         {
@@ -110,7 +142,7 @@ public class RaymarchComputeController : MonoBehaviour
             sphereBuffer = new ComputeBuffer(spheres.Count, sizeof(float) * 4);
         }
         sphereBuffer.SetData(spheres);
-    }
+    }*/
 
     void OnDisable()
     {

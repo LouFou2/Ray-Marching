@@ -144,8 +144,8 @@ Transform:
   m_GameObject: {fileID: 402423412}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 6.02}
-  m_LocalScale: {x: 0.46, y: 0.46, z: 0.46}
+  m_LocalPosition: {x: 0, y: 0, z: 5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -257,11 +257,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   raymarchCompute: {fileID: 7200000, guid: 1c8af9b6494c05d4887aa19d212e3eb8, type: 3}
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
-  maxDistance: 50
+  maxRenderDistance: 20
+  maxStretchDistance: 2
   skyBox: {fileID: 8900000, guid: f077e5107a8e2aa4a9241f434e5c815c, type: 3}
   spheres:
-  - {x: 0, y: 0, z: 4.73, w: 0.28}
-  time: 86.93063
+  - {x: 0, y: 0, z: 5, w: 0.5}
+  time: 0.02
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -293,8 +294,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 776795851}
   controllerTransform: {fileID: 402423414}
-  mouseSensitivity: 100
-  cursorDepth: 10
+  mouseSensitivity: 600
+  cursorDepth: 5
   moveSpeed: 12
 --- !u!4 &1058997079
 Transform:
@@ -360,7 +361,7 @@ MonoBehaviour:
   controlTipTransform: {fileID: 402423414}
   distanceBetweenSpawns: 1
   inflateSpeed: 2
-  maxSphereCount: 2
+  maxSphereCount: 16
   _spheresData: []
 --- !u!114 &1942873837
 MonoBehaviour:

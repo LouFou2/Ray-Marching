@@ -1,5 +1,6 @@
 // RaymarchCompute.compute
 #pragma kernel CSMain
+#pragma kernel UpdateSpheres
 #include "UnityCG.cginc"
 
 struct SphereData
@@ -24,34 +25,9 @@ float maxStretchDist;
 
 float time;
 
-//=====
-// Fluidity functions
-//=====
-float3 fluidFollowPos(float3 leadPos, float3 followPos)
-{
-    float currentDist = distance(leadPos, followPos);
-    if(currentDist > maxStretchDist)
-    {
-        maxStretchDist = currentDist;
-    }
-    float3 dir0 = normalize(leadPos - followPos);
-    
-    float useableTime = time % maxStretchDist;
-    float3 fPos = followPos;
-    if(distance(leadPos, followPos) > 0.001)
-    {
-        float lerpedX = lerp(followPos.x, leadPos.x, useableTime * 10);
-        float lerpedY = lerp(followPos.y, leadPos.y, useableTime * 10);
-        float lerpedZ = lerp(followPos.z, leadPos.z, useableTime * 10);
-        float3 fPos = float3(lerpedX, lerpedY, lerpedZ);
-    }
-    
-    return fPos;
-}
-
-// ==========================================================
-// Distance functions (same as before)
-// ==========================================================
+// ===================
+// Distance functions
+// ===================
 
 float sdSphere(float3 p, float s)
 {
@@ -71,10 +47,6 @@ float distanceField(float3 p)
 
     for (int i = 1; i < _SphereCount; i++)
     {
-        // calculation to make each sphere in the chain fluidly follow each other
-        float3 followPos = fluidFollowPos(_Spheres[i-1].sphereInfo.xyz, _Spheres[i].sphereInfo.xyz);
-        _Spheres[i].sphereInfo = float4(followPos.xyz, _Spheres[i].sphereInfo.w);
-
         float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
         d = smoothUnion(d, next, 0.55);
     }
@@ -97,11 +69,46 @@ float fresnel(float3 n, float3 rd)
     float d = 1 - saturate(abs(dot(n, rd)));
     return d;
 }
+//=====
+// Fluidity functions
+//=====
+float3 fluidFollowPos(float3 leadPos, float3 followPos)
+{
+    // difference vector
+    float3 diff = leadPos - followPos;
 
+    // move fractionally toward leader each frame
+    float smoothTime = 10.0;   // 0.1 -> very snappy, 1.0 -> slow, float
+    float3 newPos = followPos + diff * (1.0 - exp(-smoothTime * time));
+    /*
+    if(distance(leadPos, followPos) > 0.001)
+    {
+        fPos += dir0 * moveAmount;
+    }*/
+    
+    return newPos;
+}
+//====================
+//Sphere Update Kernel (for fluid relationships between points)
+//====================
+
+[numthreads(1,1,1)]
+void UpdateSpheres(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i == 0 || i >= _SphereCount) return;
+
+    float3 leader = _Spheres[i-1].sphereInfo.xyz;
+    float3 follower = _Spheres[i].sphereInfo.xyz;
+
+    float3 newPos = fluidFollowPos(leader, follower);
+    _Spheres[i].sphereInfo.xyz = newPos;
+}
 
 // ==========================================================
 // Compute kernel
 // ==========================================================
+
 [numthreads(8,8,1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {

@@ -40,6 +40,9 @@ public class Tracer3 : MonoBehaviour
                 controlTipTransform.position.z,
                 originalScale);
 
+        // --- NEW: send only the first sphere to GPU ---
+        raymarchCamScript.UpdateFirstSphere(_spheresData[0]);
+
         int lastIndex = _spheresData.Count - 1;
 
         //at the moment i am limiting the total amount of spheres (128), but only because frame rate drops a lot... I would like to optimise this issue away though
@@ -63,6 +66,7 @@ public class Tracer3 : MonoBehaviour
         {
             _spheresData[lastIndex] += new Vector4(0,0,0, Time.deltaTime * inflateSpeed);
             distanceBetweenSpawns = _spheresData[lastIndex].w;
+            PassDataToCam(_spheresData);
         }
 
         if (Input.GetMouseButton(1))
@@ -79,5 +83,6 @@ public class Tracer3 : MonoBehaviour
     void PassDataToCam(List<Vector4> sphereData)
     {
         raymarchCamScript.spheres = sphereData;
+        raymarchCamScript.InitSphereBuffer();
     }
 }
