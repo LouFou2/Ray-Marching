@@ -21,13 +21,12 @@ SamplerState _LinearClamp; // Or other sampler state
 
 RWTexture2D<float4> _Result; // output
 float2 _Resolution;          // width, height (set from C#)
-float maxStretchDist;
 
 float time;
 
-// ===================
+//===================
 // Distance functions
-// ===================
+//===================
 
 float sdSphere(float3 p, float s)
 {
@@ -69,28 +68,35 @@ float fresnel(float3 n, float3 rd)
     float d = 1 - saturate(abs(dot(n, rd)));
     return d;
 }
-//=====
+
+//=====================
 // Fluidity functions
-//=====
-float3 fluidFollowPos(float3 leadPos, float3 followPos)
+//=====================
+
+float3 fluidFollowPos(float3 leadPos, float3 followPos, float leadRad, float followRad)
 {
     // difference vector
     float3 diff = leadPos - followPos;
+    float3 dir = normalize(diff);
+    float3 dist = length(diff);
 
     // move fractionally toward leader each frame
-    float smoothTime = 10.0;   // 0.1 -> very snappy, 1.0 -> slow, float
-    float3 newPos = followPos + diff * (1.0 - exp(-smoothTime * time));
-    /*
-    if(distance(leadPos, followPos) > 0.001)
-    {
-        fPos += dir0 * moveAmount;
-    }*/
+    float smoothTime = 10.0;   // adjust as needed
+    float3 newPos = followPos;
     
+    float distBetweenSpheres = leadRad + followRad;
+
+    // just a damped follow - keeping the distance between the spheres
+    if(distance(leadPos, followPos) > distBetweenSpheres * 0.75)
+    {
+        newPos = followPos + diff * (1.0 - exp(-smoothTime * time)); 
+    }
+
     return newPos;
 }
-//====================
-//Sphere Update Kernel (for fluid relationships between points)
-//====================
+//======================
+// Sphere Update Kernel (for fluid relationships between points)
+//======================
 
 [numthreads(1,1,1)]
 void UpdateSpheres(uint3 id : SV_DispatchThreadID)
@@ -98,16 +104,20 @@ void UpdateSpheres(uint3 id : SV_DispatchThreadID)
     uint i = id.x;
     if (i == 0 || i >= _SphereCount) return;
 
-    float3 leader = _Spheres[i-1].sphereInfo.xyz;
-    float3 follower = _Spheres[i].sphereInfo.xyz;
+    int leadIndex = (i+1) % (_SphereCount);
 
-    float3 newPos = fluidFollowPos(leader, follower);
+    float3 leaderPos = _Spheres[leadIndex].sphereInfo.xyz;
+    float3 followerPos = _Spheres[i].sphereInfo.xyz;
+    float leaderRadius = _Spheres[leadIndex].sphereInfo.w;
+    float followerRadius = _Spheres[i].sphereInfo.w;
+
+    float3 newPos = fluidFollowPos(leaderPos, followerPos, leaderRadius, followerRadius);
     _Spheres[i].sphereInfo.xyz = newPos;
 }
 
-// ==========================================================
+//================
 // Compute kernel
-// ==========================================================
+//================
 
 [numthreads(8,8,1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
@@ -164,9 +174,9 @@ void CSMain(uint3 id : SV_DispatchThreadID)
             float3 n = getNormal(p);
             float f = fresnel(n, rayDir);
             float4 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, n, 0);
-            reflectCol = saturate(pow(reflectCol, 2));
+            reflectCol = saturate(pow(reflectCol, 2.0));
 
-            float3 basicCol = float3(0,0,0);
+            float3 basicCol = float3(0, 0, 0);
 
             float3 lerpedCol = lerp(basicCol, reflectCol, f);
 

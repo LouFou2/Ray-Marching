@@ -8,7 +8,6 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] ComputeShader raymarchCompute;
     [SerializeField] Shader blitShader;
     [SerializeField] float maxRenderDistance = 20f;
-    [SerializeField] float maxStretchDistance = 3f;
 
     public Cubemap skyBox;
 
@@ -28,9 +27,7 @@ public class RaymarchComputeController : MonoBehaviour
     {
         cam = GetComponent<Camera>();
         if (blitShader) blitMat = new Material(blitShader);
-       
-        raymarchCompute.SetFloat("maxStretchDist", maxStretchDistance);
-
+        
         mainKernel = raymarchCompute.FindKernel("CSMain");
         updateKernel = raymarchCompute.FindKernel("UpdateSpheres");
 
@@ -58,7 +55,8 @@ public class RaymarchComputeController : MonoBehaviour
 
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        time = Application.isPlaying ? Time.deltaTime : 0.02f;
+        //time = Application.isPlaying ? Time.deltaTime : 0.02f;
+        time = Time.deltaTime;
 
         if (raymarchCompute == null)
         {

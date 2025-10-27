@@ -7,7 +7,6 @@ public class Tracer3 : MonoBehaviour
     RaymarchComputeController raymarchCamScript;
     [SerializeField] Transform controlTipTransform;
     [SerializeField] float distanceBetweenSpawns = 1f;
-    //[SerializeField] float sphereMoveSpeed = 3f; //*** what was this for again?
     [SerializeField] float inflateSpeed = 10f;
     [SerializeField] int maxSphereCount = 2;
 
@@ -66,6 +65,7 @@ public class Tracer3 : MonoBehaviour
         {
             _spheresData[lastIndex] += new Vector4(0,0,0, Time.deltaTime * inflateSpeed);
             distanceBetweenSpawns = _spheresData[lastIndex].w;
+
             PassDataToCam(_spheresData);
         }
 

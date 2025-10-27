@@ -18,14 +18,15 @@ public class InputManager : MonoBehaviour
     
     private void Start()
     {
-        /*Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;*/
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Update()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        //Debug.Log("mouse x: " + mouseX + "mouse y: " + mouseY);
 
         // rotating the camera with the mouse
         xRotation -= mouseY;
