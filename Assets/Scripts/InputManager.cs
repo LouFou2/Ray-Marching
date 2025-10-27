@@ -11,7 +11,6 @@ public class InputManager : MonoBehaviour
     [SerializeField] float mouseSensitivity = 100f;
     [SerializeField] float cursorDepth = 5f;
     [SerializeField] float moveSpeed = 12f;
-    [SerializeField] float upDownSpeed = 100f;
 
     float xRotation;
     float yRotation;
@@ -19,8 +18,8 @@ public class InputManager : MonoBehaviour
     
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        /*Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;*/
     }
 
     void Update()
@@ -37,7 +36,7 @@ public class InputManager : MonoBehaviour
         //moving camera with wasd
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
-        float moveY = Input.GetKey(KeyCode.Space) ? Time.deltaTime * upDownSpeed : Input.GetKey(KeyCode.LeftShift) ? -(Time.deltaTime * upDownSpeed) : 0;
+        float moveY = Input.GetKey(KeyCode.Space) ? 1 : Input.GetKey(KeyCode.LeftShift) ? -1 : 0;
 
         Vector3 move = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ;
         cam.transform.position += move * moveSpeed * Time.deltaTime;

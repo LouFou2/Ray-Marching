@@ -7,14 +7,16 @@ public class Tracer3 : MonoBehaviour
     RaymarchComputeController raymarchCamScript;
     [SerializeField] Transform controlTipTransform;
     [SerializeField] float distanceBetweenSpawns = 1f;
-    [SerializeField] float sphereMoveSpeed = 3f;
+    //[SerializeField] float sphereMoveSpeed = 3f; //*** what was this for again?
     [SerializeField] float inflateSpeed = 10f;
+    [SerializeField] int maxSphereCount = 2;
 
     float originalScale;
     Vector3 previousPos;
 
-    [SerializeField] List<Vector4> _spheresData = new List<Vector4>(1);
+    [SerializeField] List<Vector4> _spheresData = new List<Vector4>();
     Vector4 controlSphereData;
+
 
     private void Start()
     {
@@ -38,7 +40,7 @@ public class Tracer3 : MonoBehaviour
         int lastIndex = _spheresData.Count - 1;
 
         //at the moment i am limiting the total amount of spheres (128), but only because frame rate drops a lot... I would like to optimise this issue away though
-        if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenSpawns && _spheresData.Count <= 255 && Input.GetMouseButton(0))
+        if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenSpawns && _spheresData.Count <= maxSphereCount-1 && Input.GetMouseButton(0))
         {
             // we add a new Vector4 to the _spheresData list
             previousPos = controlTipTransform.position;
@@ -53,6 +55,7 @@ public class Tracer3 : MonoBehaviour
 
             PassDataToCam(_spheresData);
         }
+        //inflating the sphere
         if (Vector3.Distance(previousPos, controlTipTransform.position) < distanceBetweenSpawns && _spheresData.Count > 1 && Input.GetMouseButton(0))
         {
             _spheresData[lastIndex] += new Vector4(0,0,0, Time.deltaTime * inflateSpeed);
