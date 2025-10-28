@@ -260,8 +260,8 @@ MonoBehaviour:
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
   spheres:
-  - {x: 0, y: 0, z: 5, w: 0.5}
-  time: 0.019999992
+  - {x: 0, y: 0, z: 5, w: 0.31}
+  time: 0.3061125
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
