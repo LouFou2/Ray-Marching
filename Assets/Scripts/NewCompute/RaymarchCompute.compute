@@ -10,6 +10,7 @@ struct SphereData
 
 RWStructuredBuffer<SphereData> _Spheres;
 int _SphereCount;
+float segmentLength; // for capsule shapes => distance between points/spheres
 
 float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
 float4x4 _CamToWorld;   // camera to world matrix
@@ -40,13 +41,13 @@ float sdCapsule(float3 p, float3 a, float3 b, float r)
 {
     float3 pa = p-a;
     float3 ba = b-a;
-    float h = saturate(dot(pa, ba)/dot(ba,ba));
+    float h = saturate(dot(pa, ba)/dot(ba, ba)); //the h value is like an inverse lerp from 0 to 1 across the length of the cylinder
 
-    //attempting to modify the radius...
-    float invLerped = myInverseLerp(0.0, length(ba), length(pa)); // should return value between 0 and 1
-    float parabolic = 1 - pow(4.0 * invLerped * (1.0-invLerped), 2); // a parabolic function
-    float clamper = clamp(parabolic, 0.02, 1);
-    r *= clamper;
+    //modifying the radius... 
+    float parabolic = 1 - pow(3.8 * h * (1.0-h), 2.2); // a parabolic function "3.8" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
+    // the closer together the points, the less the effect of the parabola
+    float radiusStretch = r * parabolic;
+    r = lerp(r, radiusStretch, length(ba)*r);
 
     return length(pa - ba * h) - r;
 }
