@@ -118,11 +118,12 @@ public class RaymarchComputeController : MonoBehaviour
         if (sphereBuffer == null || sphereBuffer.count != spheres.Count)
             InitSphereBuffer();
     }
-    public void UpdateFirstSphere(Vector4 firstSphereData)
+    public void UpdateFinalSphere(Vector4 finalSphereData)
     {
         if (sphereBuffer == null) return;
-        // Write only one element (index 0) into the GPU buffer
-        sphereBuffer.SetData(new Vector4[] { firstSphereData }, 0, 0, 1);
+        // Write only one element (final index) into the GPU buffer
+        int lastIndex = spheres.Count - 1;
+        sphereBuffer.SetData(new Vector4[] { finalSphereData }, 0, lastIndex, 1);
     }
 
 

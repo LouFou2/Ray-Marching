@@ -63,14 +63,15 @@ float distanceField(float3 p)
 
     if(_SphereCount > 1)
     {
-        for (int i = 1; i < _SphereCount; i++)
+        for (int i = _SphereCount - 1; i > 0 ; i--)
         {
-            float3 current = _Spheres[i-1].sphereInfo.xyz;
-            float currentR = _Spheres[i-1].sphereInfo.w;
-            float3 next = _Spheres[i].sphereInfo.xyz;
-            float nextR = _Spheres[i].sphereInfo.w;
+            float3 current = _Spheres[i].sphereInfo.xyz;
+            float currentR = _Spheres[i].sphereInfo.w;
+            float3 next = _Spheres[i-1].sphereInfo.xyz;
+            float nextR = _Spheres[i-1].sphereInfo.w;
             float avRad = (currentR + nextR) * 0.5;
-            d = sdCapsule(p, next, current, avRad);
+            float capsule = sdCapsule(p, current, next, avRad);
+            d = smoothUnion(d, capsule, 0.55);
         }
     }
 
@@ -112,7 +113,7 @@ float3 fluidFollowPos(float3 leadPos, float3 followPos, float leadRad, float fol
     float distBetweenSpheres = leadRad + followRad;
 
     // just a damped follow - keeping the distance between the spheres
-    if(distance(leadPos, followPos) > distBetweenSpheres * 0.75)
+    if(distance(leadPos, followPos) > distBetweenSpheres * 5)
     {
         newPos = followPos + diff * (1.0 - exp(-smoothTime * time)); 
     }
@@ -129,15 +130,13 @@ void UpdateSpheres(uint3 id : SV_DispatchThreadID)
     uint i = id.x;
     if (i == 0 || i >= _SphereCount) return;
 
-    int leadIndex = (i+1) % (_SphereCount);
-
-    float3 leaderPos = _Spheres[leadIndex].sphereInfo.xyz;
-    float3 followerPos = _Spheres[i].sphereInfo.xyz;
-    float leaderRadius = _Spheres[leadIndex].sphereInfo.w;
-    float followerRadius = _Spheres[i].sphereInfo.w;
+    float3 leaderPos = _Spheres[i].sphereInfo.xyz;
+    float3 followerPos = _Spheres[i-1].sphereInfo.xyz;
+    float leaderRadius = _Spheres[i].sphereInfo.w;
+    float followerRadius = _Spheres[i-1].sphereInfo.w;
 
     float3 newPos = fluidFollowPos(leaderPos, followerPos, leaderRadius, followerRadius);
-    _Spheres[i].sphereInfo.xyz = newPos;
+    _Spheres[i-1].sphereInfo.xyz = newPos;
 }
 
 //================

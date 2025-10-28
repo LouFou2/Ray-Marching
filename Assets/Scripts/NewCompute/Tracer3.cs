@@ -16,6 +16,7 @@ public class Tracer3 : MonoBehaviour
     [SerializeField] List<Vector4> _spheresData = new List<Vector4>();
     Vector4 controlSphereData;
 
+    int lastIndex = 0;
 
     private void Start()
     {
@@ -33,16 +34,13 @@ public class Tracer3 : MonoBehaviour
 
     void Update()
     {
-        _spheresData[0] = new Vector4(
+        //int lastIndex = _spheresData.Count - 1;
+
+        _spheresData[lastIndex] = new Vector4(
                 controlTipTransform.position.x,
                 controlTipTransform.position.y,
                 controlTipTransform.position.z,
                 originalScale);
-
-        // --- NEW: send only the first sphere to GPU ---
-        raymarchCamScript.UpdateFirstSphere(_spheresData[0]);
-
-        int lastIndex = _spheresData.Count - 1;
 
         //at the moment i am limiting the total amount of spheres (128), but only because frame rate drops a lot... I would like to optimise this issue away though
         if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenSpawns && _spheresData.Count <= maxSphereCount-1 && Input.GetMouseButton(0))
@@ -60,14 +58,14 @@ public class Tracer3 : MonoBehaviour
 
             PassDataToCam(_spheresData);
         }
-        //inflating the sphere
+        /*//inflating the sphere
         if (Vector3.Distance(previousPos, controlTipTransform.position) < distanceBetweenSpawns && _spheresData.Count > 1 && Input.GetMouseButton(0))
         {
             _spheresData[lastIndex] += new Vector4(0,0,0, Time.deltaTime * inflateSpeed);
             distanceBetweenSpawns = _spheresData[lastIndex].w;
 
             PassDataToCam(_spheresData);
-        }
+        }*/
 
         if (Input.GetMouseButton(1))
         {
@@ -79,6 +77,10 @@ public class Tracer3 : MonoBehaviour
                 originalScale));
             PassDataToCam(_spheresData);
         }
+
+        // --- send only the last sphere to GPU ---
+        lastIndex = _spheresData.Count - 1;
+        raymarchCamScript.UpdateFinalSphere(_spheresData[lastIndex]);
     }
     void PassDataToCam(List<Vector4> sphereData)
     {
