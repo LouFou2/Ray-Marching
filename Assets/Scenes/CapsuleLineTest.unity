@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 402423414}
   m_Layer: 0
-  m_Name: Head
+  m_Name: ControlPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -144,8 +144,8 @@ Transform:
   m_GameObject: {fileID: 402423412}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 6.02}
-  m_LocalScale: {x: 0.46, y: 0.46, z: 0.46}
+  m_LocalPosition: {x: 0, y: 0, z: 5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -257,10 +257,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   raymarchCompute: {fileID: 7200000, guid: 1c8af9b6494c05d4887aa19d212e3eb8, type: 3}
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
-  maxDistance: 50
-  skyBox: {fileID: 8900000, guid: f077e5107a8e2aa4a9241f434e5c815c, type: 3}
+  maxRenderDistance: 100
+  skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
   spheres:
-  - {x: 0, y: 0, z: 10, w: 0.61}
+  - {x: 0, y: 0, z: 5, w: 0.5}
+  time: 0.019999992
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -292,10 +293,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 776795851}
   controllerTransform: {fileID: 402423414}
-  mouseSensitivity: 100
-  cursorDepth: 10
+  mouseSensitivity: 600
+  cursorDepth: 5
   moveSpeed: 12
-  upDownSpeed: 60
 --- !u!4 &1058997079
 Transform:
   m_ObjectHideFlags: 0
@@ -358,8 +358,8 @@ MonoBehaviour:
   raymarchCamScript: {fileID: 776795853}
   controlTipTransform: {fileID: 402423414}
   distanceBetweenSpawns: 1
-  sphereMoveSpeed: 3
-  inflateSpeed: 2
+  inflateSpeed: 1
+  maxSphereCount: 32
   _spheresData: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

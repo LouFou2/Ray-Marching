@@ -32,6 +32,13 @@ float sdSphere(float3 p, float s)
 {
     return length(p) - s;
 }
+float sdCapsule(float3 p, float3 a, float3 b, float r)
+{
+    float3 pa = p-a;
+    float3 ba = b-a;
+    float h = saturate(dot(pa, ba)/dot(ba,ba));
+    return length(pa - ba * h) - r;
+}
 
 float smoothUnion(float distA, float distB, float strength)
 {
@@ -41,14 +48,32 @@ float smoothUnion(float distA, float distB, float strength)
 
 float distanceField(float3 p)
 {
-    if (_SphereCount == 0) return 1e6;
+    float d = 1e6;
+
+    //if (_SphereCount == 0) return 1e6;
+    /*
     float d = sdSphere(p - _Spheres[0].sphereInfo.xyz, _Spheres[0].sphereInfo.w);
 
     for (int i = 1; i < _SphereCount; i++)
     {
         float next = sdSphere(p - _Spheres[i].sphereInfo.xyz, _Spheres[i].sphereInfo.w);
         d = smoothUnion(d, next, 0.55);
+    }*/
+    if(_SphereCount == 1) d = sdSphere(p - _Spheres[0].sphereInfo.xyz, _Spheres[0].sphereInfo.w);
+
+    if(_SphereCount > 1)
+    {
+        for (int i = 1; i < _SphereCount; i++)
+        {
+            float3 current = _Spheres[i-1].sphereInfo.xyz;
+            float currentR = _Spheres[i-1].sphereInfo.w;
+            float3 next = _Spheres[i].sphereInfo.xyz;
+            float nextR = _Spheres[i].sphereInfo.w;
+            float avRad = (currentR + nextR) * 0.5;
+            d = sdCapsule(p, next, current, avRad);
+        }
     }
+
     return d;
 }
 
