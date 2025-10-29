@@ -94,7 +94,7 @@ float distanceField(float3 p)
             float nextR = _Spheres[i-1].sphereInfo.w;
             float avRad = (currentR + nextR) * 0.5;
 
-            if (length(next-current) <= currentR + nextR) // if they are close enough they should be spheres
+            if (length(next-current) <= currentR) // if they are close enough they should be spheres
             {
                 float sphere1 = sdSphere(p - current, currentR);
                 float sphere2 = sdSphere(p - next, nextR);
