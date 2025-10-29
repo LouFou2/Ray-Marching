@@ -9,7 +9,9 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] Shader blitShader;
     [SerializeField] float maxRenderDistance = 20f;
     public Cubemap skyBox;
-    
+
+    [SerializeField] InputManager inputManager;
+
     List<PointData> pointsData = new List<PointData>();
     [SerializeField] int pointCount = 1;
 
@@ -76,11 +78,6 @@ public class RaymarchComputeController : MonoBehaviour
 
         raymarchCompute.SetFloat("time", time);
 
-        // *** Disabling point updates for now
-        // The update kernel is kept ready, but not actually used yet...
-        // raymarchCompute.Dispatch(updatePointsKernel, Mathf.Max(1, pointCount / 64), 1, 1);
-        // older one: raymarchCompute.Dispatch(updatePointsKernel, pointCount, 1, 1);
-
         // GPU Paramaters
         raymarchCompute.SetTexture(mainKernel, "_Result", target);
         raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
@@ -93,12 +90,28 @@ public class RaymarchComputeController : MonoBehaviour
         raymarchCompute.SetFloat("_MaxDistance", maxRenderDistance);
         raymarchCompute.SetVector("_Resolution", new Vector4(target.width, target.height, 0, 0));
 
+        UpdateControlPoint();
+
         // === Buffers ===
+        
+        int threadGroups = Mathf.CeilToInt(pointCount / (float)64); // 64 seems to be the recommended size, can later be upscaled for more technical setups
+
+        // ensure update kernel has the current buffers
+        raymarchCompute.SetBuffer(updatePointsKernel, "_PointsRead", pointsA);
+        raymarchCompute.SetBuffer(updatePointsKernel, "_PointsWrite", pointsB);
+        raymarchCompute.Dispatch(updatePointsKernel, threadGroups, 1, 1);
+
+        // --- Swap buffers ---
+        var tmp = pointsA;
+        pointsA = pointsB;
+        pointsB = tmp;
+
+        // bind the updated read buffer to the main render kernel
         raymarchCompute.SetBuffer(mainKernel, "_PointsRead", pointsA);
 
+        // == Dispatching
         int threadGroupsX = Mathf.CeilToInt(target.width / 8.0f);
         int threadGroupsY = Mathf.CeilToInt(target.height / 8.0f);
-
         raymarchCompute.Dispatch(mainKernel, threadGroupsX, threadGroupsY, 1);
 
         // Blit result to screen
@@ -126,7 +139,7 @@ public class RaymarchComputeController : MonoBehaviour
         PointData[] points = new PointData[pointCount];
         for (int i = 0; i < pointCount; i++)
         {
-            points[i].pos_radius = new Vector4(0, 0, 10, 0.5f);
+            points[i].pos_radius = new Vector4(0+i, 0, 10, 0.5f);
             points[i].vel_pad = Vector4.zero;
         }
 
@@ -137,6 +150,11 @@ public class RaymarchComputeController : MonoBehaviour
         raymarchCompute.SetBuffer(updatePointsKernel, "_PointsRead", pointsA);
         raymarchCompute.SetBuffer(updatePointsKernel, "_PointsWrite", pointsB);
         raymarchCompute.SetInt("_PointCount", pointCount);
+    }
+    void UpdateControlPoint()
+    {
+        Vector3 cpPos = inputManager.GetControlPointPos();
+        raymarchCompute.SetVector("_ControlPointPos", cpPos);
     }
     /*
     void UpdateSphereBufferIfCountChanged()

@@ -56,6 +56,10 @@ public class InputManager : MonoBehaviour
             Application.Quit();
         }
 
+    }
 
+    public Vector3 GetControlPointPos()
+    {
+        return controllerTransform.position;
     }
 }

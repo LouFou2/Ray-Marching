@@ -13,7 +13,7 @@ StructuredBuffer<PointData> _PointsRead;
 RWStructuredBuffer<PointData> _PointsWrite;
 int _PointCount;
 
-//float segmentLength; // for capsule shapes => distance between points/spheres
+float3 _ControlPointPos;
 
 float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
 float4x4 _CamToWorld;   // camera to world matrix
@@ -57,36 +57,8 @@ float sdCapsule(float3 p, float3 a, float3 b, float ra, float rb)
     float3 pa = p-a;
     float3 ba = b-a;
     float h = saturate(dot(pa, ba)/dot(ba, ba)); //the h value is like an inverse lerp from 0 to 1 across the length of the cylinder
-
     float r = lerp(ra, rb, h);
-
-    //(*#* this section is irrelevant, as the radius gets calculated across the whole chain, but it is a useful reference) :
-    /*
-    if(_PointCount == 2)
-    {
-        //=== modifying the radius === 
-        float falloffFactor = myInverseLerp(r*2, segmentLength, length(ba));
-
-        float parabolic = 1 - pow(3.98 * h * (1.0 - h), 2.2); // a parabolic function "3.98" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
-        float falloff = clamp(smoothstep(1-h), 0.33, 1); // 0.3 here is the min radius of the "tip"
-    
-        // the closer together the points, the less the effect of the parabola
-        float radiusStretch = r * parabolic * falloff;
-        //float combined = radiusStretch * falloff;
-        r = lerp(ra, radiusStretch, falloffFactor);
-    }
-    */ 
-    //*#*
-
-    //what I CAN do though, is add a bit of noise or distortion:
-    float PI = 3.14159265359;
-
-    r = r + sin(h * PI * 2) * (r * 0.2);
-
-    //ba = ba + sin(h * PI * 2) * (r * 0.2); // messing with ba displaces the shape away/towards the camera/eye
-
     float d = length(pa - ba * h) - r;
-    //d = d + sin(h * PI * 4) * (r * 0.2);
     
     return d;
 }
@@ -105,8 +77,6 @@ float opUnion(float distA, float distB) // not sure why this isnt working
 float distanceField(float3 p)
 {
     float d = 1e6;
-    float segmentLength = 1.5;
-    float totalChainLength = segmentLength * (_PointCount - 1);
 
     if(_PointCount == 1) d = sdSphere(p - _PointsRead[0].pointPos_Radius.xyz, _PointsRead[0].pointPos_Radius.w);
 
@@ -114,54 +84,11 @@ float distanceField(float3 p)
     {
         for (int i = _PointCount - 1; i > 0 ; i--)
         {
-            // positions
-            float3 current = _PointsRead[i].pointPos_Radius.xyz;
-            float3 next = _PointsRead[i-1].pointPos_Radius.xyz;
-            float currentRad = _PointsRead[i].pointPos_Radius.w;
-            float nextRad = _PointsRead[i-1].pointPos_Radius.w;
+            float3 pos = _PointsRead[i].pointPos_Radius.xyz;
+            float rad = _PointsRead[i].pointPos_Radius.w;
 
-            // radii
-            // Falloff curve across the full chain length
-            float interpRadiusFactorA = myInverseLerp(0, totalChainLength, i * segmentLength ); // gives a 0 to 1 value. _PointCount-1 is the segment count
-            if(_PointCount == 2) interpRadiusFactorA = 1; // special case if only 2 points
-            float smoothA = clamp(smoothstep(interpRadiusFactorA), 0.16, 1); // 0.16 here is just an arbitrary minimum, adjust appropriately (same below (*) )
-
-            float interpRadiusFactorB = myInverseLerp(0, totalChainLength, (i-1) * segmentLength );
-            if(_PointCount == 2) interpRadiusFactorB = 1- myInverseLerp(0, segmentLength, length(current-next)); // special case if only 2 points
-            float smoothB = clamp(smoothstep(interpRadiusFactorB), 0.16, 1); // (*)
-
-            // parabolic curve
-            // how much the parabolic effect applies depends on how straight the chain is.. like it's "stretched out"
-            // so we need to check the distance between start and end point vs. the total chain length
-            float parabolicFactor = myInverseLerp(0, totalChainLength, length(_PointsRead[_PointCount-1].pointPos_Radius.xyz - _PointsRead[0].pointPos_Radius.xyz)); //0 no par, 1 = full par
-
-            float parabolicA = 1 - pow(3.98 * interpRadiusFactorA * (1.0 - interpRadiusFactorA), 2.2) * parabolicFactor; // a parabolic function "3.98" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
-            float parabolicB = 1 - pow(3.98 * interpRadiusFactorB * (1.0 - interpRadiusFactorB), 2.2) * parabolicFactor;
-            
-            float smoothParabA = currentRad * parabolicA * smoothA;
-            float smoothParabB = nextRad * parabolicB * smoothB;
-
-            float avRad = (smoothParabA + smoothParabB) * 0.5;
-
-            if (length(next-current) <= avRad) // if they are close enough they should be spheres
-            {
-                float sphere1 = sdSphere(p - current, smoothParabA);
-                float sphere2 = sdSphere(p - next, smoothParabB);
-                float joined = smoothUnion(sphere1, sphere2, avRad * 0.5);
-                d = smoothUnion(d, joined, avRad  * 0.5);
-            }
-            else
-            {
-                float capsule = sdCapsule(p, current, next, smoothParabA, smoothParabB);
-                d = smoothUnion(d, capsule, smoothParabB * 0.1); // smooth union just takes away visible joint seams
-
-                // *** IF I WANNA SWITCH TO SPHERES INSTEAD OF CAPSULES:
-                // will need to dynamically set distances between spheres based on each updated radius
-                //float sphere1 = sdSphere(p - current, smoothParabA);
-                //float sphere2 = sdSphere(p - next, smoothParabB);
-                //float joined = smoothUnion(sphere1, sphere2, avRad * 0.5);
-                //d = smoothUnion(d, joined, avRad  * 0.5);
-            }
+            float sphere = sdSphere(p - pos, rad);
+            d = smoothUnion(d, sphere, rad  * 0.5);
         }
     }
 
@@ -214,19 +141,20 @@ float3 fluidFollowPos(float3 leadPos, float3 followPos)// was previously also us
 // Sphere Update Kernel (for fluid relationships between points)
 //======================
 
-[numthreads(1,1,1)]
+[numthreads(64,1,1)]
 void UpdatePoints(uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
-    if (i == 0 || i >= _PointCount) return;
+    if (i >= _PointCount) return;
 
-    //float3 leaderPos = _PointsRead[i].pointPos_Radius.xyz;
-    //float3 followerPos = _PointsRead[i-1].pointPos_Radius.xyz;
-    //float leaderRadius = _PointsRead[i].pointPos_Radius.w;
-    //float followerRadius = _PointsRead[i-1].pointPos_Radius.w;
+    PointData p = _PointsRead[i];
 
-    //float3 newPos = fluidFollowPos(leaderPos, followerPos); // previously also used ..., leaderRadius, followerRadius);
-    //_PointsRead[i-1].pointPos_Radius.xyz = newPos;
+    if (i == _PointCount-1)
+    {
+        p.pointPos_Radius.xyz = _ControlPointPos;
+    }
+
+    _PointsWrite[i] = p;
 }
 
 //================
