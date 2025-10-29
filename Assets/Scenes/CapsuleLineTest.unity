@@ -260,8 +260,8 @@ MonoBehaviour:
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
   spheres:
-  - {x: 0, y: 0, z: 5, w: 0.31}
-  time: 0.126606
+  - {x: 0, y: 0, z: 6, w: 0.5}
+  time: 0.019999992
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -294,7 +294,7 @@ MonoBehaviour:
   cam: {fileID: 776795851}
   controllerTransform: {fileID: 402423414}
   mouseSensitivity: 600
-  cursorDepth: 3
+  cursorDepth: 10
   moveSpeed: 12
 --- !u!4 &1058997079
 Transform:
@@ -357,9 +357,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   raymarchCamScript: {fileID: 776795853}
   controlTipTransform: {fileID: 402423414}
-  distanceBetweenPoints: 2
+  distanceBetweenPoints: 1
   inflateSpeed: 1
-  maxSphereCount: 4
+  maxSphereCount: 8
   _spheresData: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

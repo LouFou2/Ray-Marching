@@ -14,7 +14,8 @@ public class InputManager : MonoBehaviour
 
     float xRotation;
     float yRotation;
-    
+
+    bool controlSuspend;
     
     private void Start()
     {
@@ -24,6 +25,9 @@ public class InputManager : MonoBehaviour
 
     void Update()
     {
+        //suspend control with "e"
+        if (Input.GetKey(KeyCode.E)) controlSuspend = !controlSuspend;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
         //Debug.Log("mouse x: " + mouseX + "mouse y: " + mouseY);
@@ -44,7 +48,8 @@ public class InputManager : MonoBehaviour
 
         //use mouse movement for setting the control object's target position
         objectTargetPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
-        controllerTransform.position = objectTargetPos;
+
+        if(!controlSuspend) controllerTransform.position = objectTargetPos;
 
         if (Input.GetKey("escape"))
         {
