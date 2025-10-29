@@ -259,9 +259,7 @@ MonoBehaviour:
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
-  spheres:
-  - {x: 0, y: 0, z: 6, w: 0.5}
-  time: 0.019999992
+  time: 0.33333334
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,7 +318,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1942873835}
-  - component: {fileID: 1942873836}
   m_Layer: 0
   m_Name: Tracer
   m_TagString: Untagged
@@ -343,24 +340,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1942873836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1942873833}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 89b66a40352bdf640b5edb7558275475, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  raymarchCamScript: {fileID: 776795853}
-  controlTipTransform: {fileID: 402423414}
-  distanceBetweenPoints: 1
-  inflateSpeed: 1
-  maxSphereCount: 8
-  _spheresData: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

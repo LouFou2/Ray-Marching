@@ -23,12 +23,12 @@ public class Tracer3 : MonoBehaviour
 
         previousPos = controlTipTransform.position;
 
-        _spheresData = raymarchCamScript.spheres;
+        //_spheresData = raymarchCamScript.pointsData;
 
         controlSphereData = _spheresData[0];
         originalScale = controlSphereData.w;
         //distanceBetweenSpawns = originalScale * 1.5f;
-        raymarchCamScript.UpdateSegmentLength(distanceBetweenPoints);
+        //raymarchCamScript.UpdateSegmentLength(distanceBetweenPoints);
 
         PassDataToCam(_spheresData);
     }
@@ -79,11 +79,11 @@ public class Tracer3 : MonoBehaviour
 
         // --- send only the last sphere to GPU ---
         lastIndex = _spheresData.Count - 1;
-        raymarchCamScript.UpdateFinalSphere(_spheresData[lastIndex]);
+        //raymarchCamScript.UpdateFinalSphere(_spheresData[lastIndex]);
     }
     void PassDataToCam(List<Vector4> sphereData)
     {
-        raymarchCamScript.spheres = sphereData;
-        raymarchCamScript.InitSphereBuffer();
+        //raymarchCamScript.pointsData = sphereData;
+        raymarchCamScript.InitPointsBuffer();
     }
 }

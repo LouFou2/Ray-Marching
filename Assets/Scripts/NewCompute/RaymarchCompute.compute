@@ -1,16 +1,19 @@
 // RaymarchCompute.compute
 #pragma kernel CSMain
-#pragma kernel UpdateSpheres
+#pragma kernel UpdatePoints
 #include "UnityCG.cginc"
 
-struct SphereData
+struct PointData
 {
-    float4 sphereInfo; // xyz = position, w = radius
+    float4 pointPos_Radius; // xyz = position, w = radius
+    float4 pointVelocity_pad; // xyz  = velocity, w = pad
 };
 
-RWStructuredBuffer<SphereData> _Spheres;
-int _SphereCount;
-float segmentLength; // for capsule shapes => distance between points/spheres
+StructuredBuffer<PointData> _PointsRead;
+RWStructuredBuffer<PointData> _PointsWrite;
+int _PointCount;
+
+//float segmentLength; // for capsule shapes => distance between points/spheres
 
 float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
 float4x4 _CamToWorld;   // camera to world matrix
@@ -24,7 +27,6 @@ RWTexture2D<float4> _Result; // output
 float2 _Resolution;          // width, height (set from C#)
 
 float time;
-//float PI = 3.14159265359;
 
 //===================
 // Helper functions
@@ -34,6 +36,7 @@ float myInverseLerp(float a, float b, float t)
 {
     return saturate((t-a)/(b-a));
 }
+
 // from: https://iquilezles.org/articles/smoothsteps/
 float smoothstep( float x )
 {
@@ -49,7 +52,6 @@ float sdSphere(float3 p, float s)
     return length(p) - s;
 }
 
-
 float sdCapsule(float3 p, float3 a, float3 b, float ra, float rb)
 {
     float3 pa = p-a;
@@ -60,7 +62,7 @@ float sdCapsule(float3 p, float3 a, float3 b, float ra, float rb)
 
     //(*#* this section is irrelevant, as the radius gets calculated across the whole chain, but it is a useful reference) :
     /*
-    if(_SphereCount == 2)
+    if(_PointCount == 2)
     {
         //=== modifying the radius === 
         float falloffFactor = myInverseLerp(r*2, segmentLength, length(ba));
@@ -79,10 +81,12 @@ float sdCapsule(float3 p, float3 a, float3 b, float ra, float rb)
     //what I CAN do though, is add a bit of noise or distortion:
     float PI = 3.14159265359;
 
-    //r = r + sin(h * PI * 2) * (r * 0.2);
+    r = r + sin(h * PI * 2) * (r * 0.2);
+
+    //ba = ba + sin(h * PI * 2) * (r * 0.2); // messing with ba displaces the shape away/towards the camera/eye
 
     float d = length(pa - ba * h) - r;
-    d = d + sin(h * PI * 4) * (r * 0.2);
+    //d = d + sin(h * PI * 4) * (r * 0.2);
     
     return d;
 }
@@ -98,38 +102,38 @@ float opUnion(float distA, float distB) // not sure why this isnt working
     return min(distA, distB);
 }
 
-
 float distanceField(float3 p)
 {
     float d = 1e6;
-    float totalChainLength = segmentLength * (_SphereCount - 1);
+    float segmentLength = 1.5;
+    float totalChainLength = segmentLength * (_PointCount - 1);
 
-    if(_SphereCount == 1) d = sdSphere(p - _Spheres[0].sphereInfo.xyz, _Spheres[0].sphereInfo.w);
+    if(_PointCount == 1) d = sdSphere(p - _PointsRead[0].pointPos_Radius.xyz, _PointsRead[0].pointPos_Radius.w);
 
-    if(_SphereCount > 1)
+    if(_PointCount > 1)
     {
-        for (int i = _SphereCount - 1; i > 0 ; i--)
+        for (int i = _PointCount - 1; i > 0 ; i--)
         {
             // positions
-            float3 current = _Spheres[i].sphereInfo.xyz;
-            float3 next = _Spheres[i-1].sphereInfo.xyz;
-            float currentRad = _Spheres[i].sphereInfo.w;
-            float nextRad = _Spheres[i-1].sphereInfo.w;
+            float3 current = _PointsRead[i].pointPos_Radius.xyz;
+            float3 next = _PointsRead[i-1].pointPos_Radius.xyz;
+            float currentRad = _PointsRead[i].pointPos_Radius.w;
+            float nextRad = _PointsRead[i-1].pointPos_Radius.w;
 
             // radii
             // Falloff curve across the full chain length
-            float interpRadiusFactorA = myInverseLerp(0, totalChainLength, i * segmentLength ); // gives a 0 to 1 value. _SphereCount-1 is the segment count
-            if(_SphereCount == 2) interpRadiusFactorA = 1; // special case if only 2 points
+            float interpRadiusFactorA = myInverseLerp(0, totalChainLength, i * segmentLength ); // gives a 0 to 1 value. _PointCount-1 is the segment count
+            if(_PointCount == 2) interpRadiusFactorA = 1; // special case if only 2 points
             float smoothA = clamp(smoothstep(interpRadiusFactorA), 0.16, 1); // 0.16 here is just an arbitrary minimum, adjust appropriately (same below (*) )
 
             float interpRadiusFactorB = myInverseLerp(0, totalChainLength, (i-1) * segmentLength );
-            if(_SphereCount == 2) interpRadiusFactorB = 1- myInverseLerp(0, segmentLength, length(current-next)); // special case if only 2 points
+            if(_PointCount == 2) interpRadiusFactorB = 1- myInverseLerp(0, segmentLength, length(current-next)); // special case if only 2 points
             float smoothB = clamp(smoothstep(interpRadiusFactorB), 0.16, 1); // (*)
 
             // parabolic curve
             // how much the parabolic effect applies depends on how straight the chain is.. like it's "stretched out"
             // so we need to check the distance between start and end point vs. the total chain length
-            float parabolicFactor = myInverseLerp(0, totalChainLength, length(_Spheres[_SphereCount-1].sphereInfo.xyz - _Spheres[0].sphereInfo.xyz)); //0 no par, 1 = full par
+            float parabolicFactor = myInverseLerp(0, totalChainLength, length(_PointsRead[_PointCount-1].pointPos_Radius.xyz - _PointsRead[0].pointPos_Radius.xyz)); //0 no par, 1 = full par
 
             float parabolicA = 1 - pow(3.98 * interpRadiusFactorA * (1.0 - interpRadiusFactorA), 2.2) * parabolicFactor; // a parabolic function "3.98" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
             float parabolicB = 1 - pow(3.98 * interpRadiusFactorB * (1.0 - interpRadiusFactorB), 2.2) * parabolicFactor;
@@ -197,7 +201,7 @@ float3 fluidFollowPos(float3 leadPos, float3 followPos)// was previously also us
     float3 newPos = followPos;
     
     //float distBetweenSpheres = leadRad + followRad; //* see old below
-
+    float segmentLength = 1.5;
     // just a damped follow - keeping the distance between the spheres
     if(distance(leadPos, followPos) > segmentLength) // *old: if(distance(leadPos, followPos) > distBetweenSpheres * 5)
     {
@@ -211,18 +215,18 @@ float3 fluidFollowPos(float3 leadPos, float3 followPos)// was previously also us
 //======================
 
 [numthreads(1,1,1)]
-void UpdateSpheres(uint3 id : SV_DispatchThreadID)
+void UpdatePoints(uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
-    if (i == 0 || i >= _SphereCount) return;
+    if (i == 0 || i >= _PointCount) return;
 
-    float3 leaderPos = _Spheres[i].sphereInfo.xyz;
-    float3 followerPos = _Spheres[i-1].sphereInfo.xyz;
-    //float leaderRadius = _Spheres[i].sphereInfo.w;
-    //float followerRadius = _Spheres[i-1].sphereInfo.w;
+    //float3 leaderPos = _PointsRead[i].pointPos_Radius.xyz;
+    //float3 followerPos = _PointsRead[i-1].pointPos_Radius.xyz;
+    //float leaderRadius = _PointsRead[i].pointPos_Radius.w;
+    //float followerRadius = _PointsRead[i-1].pointPos_Radius.w;
 
-    float3 newPos = fluidFollowPos(leaderPos, followerPos); // previously also used ..., leaderRadius, followerRadius);
-    _Spheres[i-1].sphereInfo.xyz = newPos;
+    //float3 newPos = fluidFollowPos(leaderPos, followerPos); // previously also used ..., leaderRadius, followerRadius);
+    //_PointsRead[i-1].pointPos_Radius.xyz = newPos;
 }
 
 //================

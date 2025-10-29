@@ -9,18 +9,28 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] Shader blitShader;
     [SerializeField] float maxRenderDistance = 20f;
     public Cubemap skyBox;
+    
+    List<PointData> pointsData = new List<PointData>();
+    [SerializeField] int pointCount = 1;
 
-    public List<Vector4> spheres = new List<Vector4>();
+    ComputeBuffer pointsA;
+    ComputeBuffer pointsB;
 
     Camera cam;
     Material blitMat;
-    ComputeBuffer sphereBuffer;
     RenderTexture target;
 
     [SerializeField] float time = 0;
 
     int mainKernel;
-    int updateKernel;
+    int updatePointsKernel;
+
+    [System.Serializable]
+    struct PointData
+    {
+        public Vector4 pos_radius; // x,y,z,r
+        public Vector4 vel_pad;    // x,y,z,pad
+    }
 
     void Awake()
     {
@@ -28,12 +38,11 @@ public class RaymarchComputeController : MonoBehaviour
         if (blitShader) blitMat = new Material(blitShader);
         
         mainKernel = raymarchCompute.FindKernel("CSMain");
-        updateKernel = raymarchCompute.FindKernel("UpdateSpheres");
+        updatePointsKernel = raymarchCompute.FindKernel("UpdatePoints");
 
-        raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
+        //raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
         
-        InitSphereBuffer(); // initialize spheres once at start
-
+        InitPointsBuffer(); // initialize spheres once at start
     }
 
     void InitRenderTexture()
@@ -54,7 +63,6 @@ public class RaymarchComputeController : MonoBehaviour
 
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        //time = Application.isPlaying ? Time.deltaTime : 0.02f;
         time = Time.deltaTime;
 
         if (raymarchCompute == null)
@@ -64,23 +72,29 @@ public class RaymarchComputeController : MonoBehaviour
         }
 
         InitRenderTexture();
-        UpdateSphereBufferIfCountChanged();
+        //UpdateSphereBufferIfCountChanged();
 
         raymarchCompute.SetFloat("time", time);
-        raymarchCompute.Dispatch(updateKernel, spheres.Count, 1, 1);
 
-        // Set resources
+        // *** Disabling point updates for now
+        // The update kernel is kept ready, but not actually used yet...
+        // raymarchCompute.Dispatch(updatePointsKernel, Mathf.Max(1, pointCount / 64), 1, 1);
+        // older one: raymarchCompute.Dispatch(updatePointsKernel, pointCount, 1, 1);
+
+        // GPU Paramaters
         raymarchCompute.SetTexture(mainKernel, "_Result", target);
-        raymarchCompute.SetInt("_SphereCount", spheres.Count);
+        raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
+        raymarchCompute.SetInt("_PointCount", pointCount);
         
-        // Pass matrices (CamFrustum rows must match the order used in compute shader)
+        // Camera Stuff
         raymarchCompute.SetMatrix("_CamFrustum", CamFrustum(cam));
         raymarchCompute.SetMatrix("_CamToWorld", cam.cameraToWorldMatrix);
         raymarchCompute.SetVector("_CameraPos", cam.transform.position);
         raymarchCompute.SetFloat("_MaxDistance", maxRenderDistance);
-
-        // Also pass resolution explicitly
         raymarchCompute.SetVector("_Resolution", new Vector4(target.width, target.height, 0, 0));
+
+        // === Buffers ===
+        raymarchCompute.SetBuffer(mainKernel, "_PointsRead", pointsA);
 
         int threadGroupsX = Mathf.CeilToInt(target.width / 8.0f);
         int threadGroupsY = Mathf.CeilToInt(target.height / 8.0f);
@@ -99,39 +113,53 @@ public class RaymarchComputeController : MonoBehaviour
         }
 
     }
-    public void InitSphereBuffer()
+
+    public void InitPointsBuffer()
     {
-        if (spheres == null || spheres.Count == 0) return;
-        if (sphereBuffer != null) sphereBuffer.Release();
+        if (pointsA != null) pointsA.Release();
+        if (pointsB != null) pointsB.Release();
 
-        sphereBuffer = new ComputeBuffer(spheres.Count, sizeof(float) * 4);
-        sphereBuffer.SetData(spheres);
+        pointsA = new ComputeBuffer(pointCount, sizeof(float) * 8);
+        pointsB = new ComputeBuffer(pointCount, sizeof(float) * 8);
 
-        raymarchCompute.SetBuffer(mainKernel, "_Spheres", sphereBuffer);
-        raymarchCompute.SetBuffer(updateKernel, "_Spheres", sphereBuffer);
-        raymarchCompute.SetInt("_SphereCount", spheres.Count);
+        // init particles
+        PointData[] points = new PointData[pointCount];
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].pos_radius = new Vector4(0, 0, 10, 0.5f);
+            points[i].vel_pad = Vector4.zero;
+        }
+
+        pointsA.SetData(points);
+        pointsB.SetData(points);
+
+        raymarchCompute.SetBuffer(mainKernel, "_PointsRead", pointsA);
+        raymarchCompute.SetBuffer(updatePointsKernel, "_PointsRead", pointsA);
+        raymarchCompute.SetBuffer(updatePointsKernel, "_PointsWrite", pointsB);
+        raymarchCompute.SetInt("_PointCount", pointCount);
     }
-
+    /*
     void UpdateSphereBufferIfCountChanged()
     {
-        if (sphereBuffer == null || sphereBuffer.count != spheres.Count)
-            InitSphereBuffer();
+        if (pointsA == null || pointsA.count != pointsData.Count)
+            InitPointsBuffer();
     }
     public void UpdateFinalSphere(Vector4 finalSphereData)
     {
-        if (sphereBuffer == null) return;
+        if (pointsA == null) return;
         // Write only one element (final index) into the GPU buffer
-        int lastIndex = spheres.Count - 1;
-        sphereBuffer.SetData(new Vector4[] { finalSphereData }, 0, lastIndex, 1);
+        int lastIndex = pointsData.Count - 1;
+        pointsA.SetData(new Vector4[] { finalSphereData }, 0, lastIndex, 1);
     }
     public void UpdateSegmentLength(float segmentLength) // distance between points
     {
         raymarchCompute.SetFloat("segmentLength", segmentLength);
     }
-
+    */
     void OnDisable()
     {
-        if (sphereBuffer != null) sphereBuffer.Release();
+        if (pointsA != null) pointsA.Release();
+        if (pointsB != null) pointsB.Release();
         if (target != null) target.Release();
     }
 
