@@ -6,7 +6,7 @@ public class Tracer3 : MonoBehaviour
     [SerializeField]
     RaymarchComputeController raymarchCamScript;
     [SerializeField] Transform controlTipTransform;
-    [SerializeField] float distanceBetweenSpawns = 1f;
+    [SerializeField] float distanceBetweenPoints = 1f;
     [SerializeField] float inflateSpeed = 10f;
     [SerializeField] int maxSphereCount = 2;
 
@@ -27,15 +27,14 @@ public class Tracer3 : MonoBehaviour
 
         controlSphereData = _spheresData[0];
         originalScale = controlSphereData.w;
-        distanceBetweenSpawns = originalScale * 1.5f;
+        //distanceBetweenSpawns = originalScale * 1.5f;
+        raymarchCamScript.UpdateSegmentLength(distanceBetweenPoints);
 
         PassDataToCam(_spheresData);
     }
 
     void Update()
     {
-        //int lastIndex = _spheresData.Count - 1;
-
         _spheresData[lastIndex] = new Vector4(
                 controlTipTransform.position.x,
                 controlTipTransform.position.y,
@@ -43,7 +42,7 @@ public class Tracer3 : MonoBehaviour
                 originalScale);
 
         //at the moment i am limiting the total amount of spheres (128), but only because frame rate drops a lot... I would like to optimise this issue away though
-        if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenSpawns && _spheresData.Count <= maxSphereCount-1 && Input.GetMouseButton(0))
+        if (Vector3.Distance(previousPos, controlTipTransform.position) > distanceBetweenPoints && _spheresData.Count <= maxSphereCount-1 && Input.GetMouseButton(0))
         {
             // we add a new Vector4 to the _spheresData list
             previousPos = controlTipTransform.position;

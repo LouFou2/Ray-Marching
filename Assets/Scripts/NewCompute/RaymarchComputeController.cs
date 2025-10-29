@@ -8,7 +8,6 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] ComputeShader raymarchCompute;
     [SerializeField] Shader blitShader;
     [SerializeField] float maxRenderDistance = 20f;
-
     public Cubemap skyBox;
 
     public List<Vector4> spheres = new List<Vector4>();
@@ -32,7 +31,7 @@ public class RaymarchComputeController : MonoBehaviour
         updateKernel = raymarchCompute.FindKernel("UpdateSpheres");
 
         raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
-
+        
         InitSphereBuffer(); // initialize spheres once at start
 
     }
@@ -125,23 +124,10 @@ public class RaymarchComputeController : MonoBehaviour
         int lastIndex = spheres.Count - 1;
         sphereBuffer.SetData(new Vector4[] { finalSphereData }, 0, lastIndex, 1);
     }
-
-
-    /*void UpdateSphereBuffer()
+    public void UpdateSegmentLength(float segmentLength) // distance between points
     {
-        if (spheres == null || spheres.Count == 0)
-        {
-            if (sphereBuffer != null) { sphereBuffer.Release(); sphereBuffer = null; }
-            return;
-        }
-
-        if (sphereBuffer == null || sphereBuffer.count != spheres.Count)
-        {
-            if (sphereBuffer != null) sphereBuffer.Release();
-            sphereBuffer = new ComputeBuffer(spheres.Count, sizeof(float) * 4);
-        }
-        sphereBuffer.SetData(spheres);
-    }*/
+        raymarchCompute.SetFloat("segmentLength", segmentLength);
+    }
 
     void OnDisable()
     {

@@ -24,6 +24,7 @@ RWTexture2D<float4> _Result; // output
 float2 _Resolution;          // width, height (set from C#)
 
 float time;
+float PI = 3.14159265359;
 
 //===================
 // Distance functions
@@ -32,22 +33,35 @@ float myInverseLerp(float a, float b, float t)
 {
     return saturate((t-a)/(b-a));
 }
+// from: https://iquilezles.org/articles/smoothsteps/
+float smoothstep( float x )
+{
+  return x*x*(2.0-x*x);
+}
 
 float sdSphere(float3 p, float s)
 {
     return length(p) - s;
 }
+
+
 float sdCapsule(float3 p, float3 a, float3 b, float r)
 {
     float3 pa = p-a;
     float3 ba = b-a;
     float h = saturate(dot(pa, ba)/dot(ba, ba)); //the h value is like an inverse lerp from 0 to 1 across the length of the cylinder
 
-    //modifying the radius... 
-    float parabolic = 1 - pow(3.8 * h * (1.0-h), 2.2); // a parabolic function "3.8" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
+    //=== modifying the radius === 
+    float falloffFactor = myInverseLerp(r*2, segmentLength, length(ba));
+
+    float parabolic = 1 - pow(3.98 * h * (1.0 - h), 2.2); // a parabolic function "3.98" was 4.0, it changes the thin min. "2.2" was 2, it changes the start/end of curve
+    float falloff = clamp(smoothstep(1-h), 0.33, 1); // 0.3 here is the min radius of the "tip"
+    
     // the closer together the points, the less the effect of the parabola
-    float radiusStretch = r * parabolic;
-    r = lerp(r, radiusStretch, length(ba)*r);
+    float radiusStretch = r * parabolic * falloff;
+    //float combined = radiusStretch * falloff;
+    r = lerp(r, radiusStretch, falloffFactor);
+    
 
     return length(pa - ba * h) - r;
 }
@@ -79,8 +93,19 @@ float distanceField(float3 p)
             float3 next = _Spheres[i-1].sphereInfo.xyz;
             float nextR = _Spheres[i-1].sphereInfo.w;
             float avRad = (currentR + nextR) * 0.5;
-            float capsule = sdCapsule(p, current, next, avRad);
-            d = smoothUnion(d, capsule, avRad * 0.1); // smooth union jyst takes away visible joint seams
+
+            if (length(next-current) <= currentR + nextR) // if they are close enough they should be spheres
+            {
+                float sphere1 = sdSphere(p - current, currentR);
+                float sphere2 = sdSphere(p - next, nextR);
+                float joined = smoothUnion(sphere1, sphere2, avRad);
+                d = smoothUnion(d, joined, avRad);
+            }
+            else
+            {
+                float capsule = sdCapsule(p, current, next, avRad);
+                d = smoothUnion(d, capsule, avRad * 0.1); // smooth union just takes away visible joint seams
+            }
         }
     }
 
@@ -119,10 +144,10 @@ float3 fluidFollowPos(float3 leadPos, float3 followPos, float leadRad, float fol
     float smoothTime = 10.0;   // adjust as needed
     float3 newPos = followPos;
     
-    float distBetweenSpheres = leadRad + followRad;
+    //float distBetweenSpheres = leadRad + followRad; //* see old below
 
     // just a damped follow - keeping the distance between the spheres
-    if(distance(leadPos, followPos) > distBetweenSpheres * 5)
+    if(distance(leadPos, followPos) > segmentLength) // *old: if(distance(leadPos, followPos) > distBetweenSpheres * 5)
     {
         newPos = followPos + diff * (1.0 - exp(-smoothTime * time)); 
     }
