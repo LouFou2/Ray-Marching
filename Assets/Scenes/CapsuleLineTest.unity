@@ -260,7 +260,7 @@ MonoBehaviour:
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
   inputManager: {fileID: 1058997078}
-  pointCount: 1
+  pointCount: 3
   time: 0.019999992
 --- !u!1 &1058997077
 GameObject:

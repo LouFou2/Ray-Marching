@@ -88,7 +88,7 @@ float distanceField(float3 p)
             float rad = _PointsRead[i].pointPos_Radius.w;
 
             float sphere = sdSphere(p - pos, rad);
-            d = smoothUnion(d, sphere, rad  * 0.5);
+            d = smoothUnion(d, sphere, rad  * 0.1);
         }
     }
 
@@ -116,29 +116,21 @@ float fresnel(float3 n, float3 rd)
 // Fluidity functions
 //=====================
 
-float3 fluidFollowPos(float3 leadPos, float3 followPos)// was previously also using: ..., float leadRad, float followRad)*
+float3 fluidFollowPos(float3 pos, float3 vel)// was previously also using: ..., float leadRad, float followRad)*
 {
-    // difference vector
-    float3 diff = leadPos - followPos;
-    float3 dir = normalize(diff);
-    float3 dist = length(diff);
+    float3 dir = normalize(vel);
+    float3 dist = length(vel);
 
     // move fractionally toward leader each frame
-    float smoothTime = 5.0;   // adjust as needed
-    float3 newPos = followPos;
+    float smoothTime = dist * 5;   // adjust as needed
     
-    //float distBetweenSpheres = leadRad + followRad; //* see old below
-    float segmentLength = 1.5;
     // just a damped follow - keeping the distance between the spheres
-    if(distance(leadPos, followPos) > segmentLength) // *old: if(distance(leadPos, followPos) > distBetweenSpheres * 5)
-    {
-        newPos = followPos + diff * (1.0 - exp(-smoothTime * time)); 
-    }
+    float3 newPos = pos + dir * (1.0 - exp(-smoothTime * time));
 
     return newPos;
 }
 //======================
-// Sphere Update Kernel (for fluid relationships between points)
+// Point Update Kernel (for fluid relationships between points)
 //======================
 
 [numthreads(64,1,1)]
@@ -149,16 +141,32 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     PointData p = _PointsRead[i];
 
-    if (i == _PointCount-1)
+    if (i == _PointCount-1) // this is currently the Control Point
     {
         p.pointPos_Radius.xyz = _ControlPointPos;
+    }
+
+    if(i < _PointCount - 1)
+    {
+        //fluid following
+        PointData target = _PointsRead[i+1]; 
+        float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz;
+        // probably need some conversion for diff to velocity as a useful value here
+        p.pointVelocity_pad.xyz = diff;
+
+        if(length(p.pointVelocity_pad.xyz) > p.pointPos_Radius.w)
+        {
+            float3 fluidPos = fluidFollowPos(p.pointPos_Radius.xyz, p.pointVelocity_pad.xyz);
+            p.pointPos_Radius.xyz = fluidPos;
+        }
+
     }
 
     _PointsWrite[i] = p;
 }
 
 //================
-// Compute kernel
+// Visual Rendering Kernel
 //================
 
 [numthreads(8,8,1)]
