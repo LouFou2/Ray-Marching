@@ -28,6 +28,8 @@ float2 _Resolution;          // width, height (set from C#)
 
 float time;
 
+float totalChainLength;
+
 //===================
 // Helper functions
 //===================
@@ -131,18 +133,20 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     if(i < _PointCount - 1)
     {
-
+        // === VELOCITY ===
         //1. calculate new velocity
         //2. write/store new velocity 
         //3. read old velocity, update current position
         
         //1.
         PointData target = _PointsRead[i+1]; 
-        float restlength = target.pointPos_Radius.w * 0.8; // a little bit inside the radius, can adjust this
         float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz; // direction TO the target, so this takes care of the negative in -k * x
+        
+        float restlength = target.pointPos_Radius.w * 0.8; // a little bit inside the radius, can adjust this
+        
         float extention = length(diff) - restlength;
         float3 dir = normalize(diff);
-        float k = 0.01; // the constant, can adjust this
+        float k = 0.005; // the constant, can adjust this
         float3 force = dir * k * extention;
         
         float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w);
@@ -154,13 +158,24 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
         float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
-        newVelocity *= 0.97;
+        newVelocity *= 0.98;
         //3.
+        float3 oldPos = p.pointPos_Radius.xyz; // just storing this for use in scaling below, before updating ***
         p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
         p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
-       
+        
+        // === SCALE ===
+        //1. Curve Falloff towards "tail" (0 to 1 from tail to head)
+        //2. Parabolic curve accross length
+        PointData headPoint = _PointsRead[_PointCount - 1];
+        float3 headPos = headPoint.pointPos_Radius.xyz;
+        float headRadius = headPoint.pointPos_Radius.w;
+        float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius; // *** should i use oldPos???
+        float invLerpedFactor = myInverseLerp(restlength, headRadius * _PointCount, distFromHead);
+        //float falloffScale = acos(pow(invLerpedFactor, 3)) / (3.141592 * 0.5);
+        p.pointPos_Radius.w = headRadius * (1 - invLerpedFactor);
+        
     }
-
     _PointsWrite[i] = p;
 }
 

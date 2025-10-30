@@ -47,6 +47,9 @@ public class RaymarchComputeController : MonoBehaviour
         //raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
         
         InitPointsBuffer(); // initialize spheres once at start
+
+        float chainLength = sphereScale * pointCount - 1;
+        raymarchCompute.SetFloat("totalChainLength", chainLength);
     }
 
     void InitRenderTexture()
