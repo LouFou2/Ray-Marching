@@ -151,13 +151,20 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         //fluid following
         PointData target = _PointsRead[i+1]; 
         float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz;
+        float3 dir = normalize(diff);
+        float dist = length(diff);
+        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w) * 0.8;
         // probably need some conversion for diff to velocity as a useful value here
         p.pointVelocity_pad.xyz = diff;
 
-        if(length(p.pointVelocity_pad.xyz) > p.pointPos_Radius.w)
+        if(dist > p.pointPos_Radius.w && dist <= maxDist)
         {
             float3 fluidPos = fluidFollowPos(p.pointPos_Radius.xyz, p.pointVelocity_pad.xyz);
             p.pointPos_Radius.xyz = fluidPos;
+        }
+        if(dist > maxDist)
+        {
+            p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
         }
 
     }

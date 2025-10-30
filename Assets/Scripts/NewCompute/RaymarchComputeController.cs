@@ -139,7 +139,7 @@ public class RaymarchComputeController : MonoBehaviour
         PointData[] points = new PointData[pointCount];
         for (int i = 0; i < pointCount; i++)
         {
-            points[i].pos_radius = new Vector4(0+i, 0, 10, 0.5f);
+            points[i].pos_radius = new Vector4(0+i, 0, 10, 1.0f);
             points[i].vel_pad = Vector4.zero;
         }
 
