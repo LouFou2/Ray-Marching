@@ -10,6 +10,8 @@ public class RaymarchComputeController : MonoBehaviour
     [SerializeField] float maxRenderDistance = 20f;
     public Cubemap skyBox;
 
+    [SerializeField] float sphereScale = 0.5f;
+
     [SerializeField] InputManager inputManager;
 
     List<PointData> pointsData = new List<PointData>();
@@ -141,10 +143,10 @@ public class RaymarchComputeController : MonoBehaviour
         PointData[] points = new PointData[pointCount];
         for (int i = 0; i < pointCount; i++)
         {
-            points[i].pos_radius = new Vector4(controlPoint.x + (i * 0.5f), 0, 10, 0.5f);
+            points[i].pos_radius = new Vector4(controlPoint.x + (i * sphereScale), 0, 10, sphereScale);
             points[i].vel_pad = Vector4.zero;
         }
-        points[pointCount - 1].pos_radius = new Vector4(controlPoint.x, 0, 10, 0.5f);
+        points[pointCount - 1].pos_radius = new Vector4(controlPoint.x, 0, 10, sphereScale);
 
         pointsA.SetData(points);
         pointsB.SetData(points);

@@ -112,23 +112,6 @@ float fresnel(float3 n, float3 rd)
     return d;
 }
 
-//=====================
-// Fluidity functions
-//=====================
-
-float3 fluidFollowPos(float3 pos, float3 vel)// was previously also using: ..., float leadRad, float followRad)*
-{
-    float3 dir = normalize(vel);
-    float3 dist = length(vel);
-
-    // move fractionally toward leader each frame
-    float smoothTime = dist * 5;   // adjust as needed
-    
-    // just a damped follow - keeping the distance between the spheres
-    float3 newPos = pos + dir * (1.0 - exp(-smoothTime * time));
-
-    return newPos;
-}
 //======================
 // Point Update Kernel (for fluid relationships between points)
 //======================
@@ -155,22 +138,25 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         
         //1.
         PointData target = _PointsRead[i+1]; 
-        float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz;
+        float restlength = target.pointPos_Radius.w * 0.8; // a little bit inside the radius, can adjust this
+        float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz; // direction TO the target, so this takes care of the negative in -k * x
+        float extention = length(diff) - restlength;
         float3 dir = normalize(diff);
-        float dist = length(diff);
-        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w);
+        float k = 0.01; // the constant, can adjust this
+        float3 force = dir * k * extention;
         
-        if(dist > maxDist)
+        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w);
+        if(length(diff) > maxDist) // clamping to the max allowed distance
         {
             p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
         }
-
-        float forceFactor = saturate(myInverseLerp(p.pointPos_Radius.w, maxDist, dist));
+        
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
-        float3 newVelocity = oldVelocity + dir * forceFactor * time * 0.1; // unsure this is correct  ***
+        float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
+        newVelocity *= 0.97;
         //3.
-        p.pointPos_Radius.xyz += p.pointVelocity_pad.xyz; //add old velocity first before updating new velocity *..
+        p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
         p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
        
     }
