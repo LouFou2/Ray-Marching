@@ -134,14 +134,17 @@ public class RaymarchComputeController : MonoBehaviour
 
         pointsA = new ComputeBuffer(pointCount, sizeof(float) * 8);
         pointsB = new ComputeBuffer(pointCount, sizeof(float) * 8);
+        
+        Vector3 controlPoint = inputManager.GetControlPointPos();
 
         // init particles
         PointData[] points = new PointData[pointCount];
         for (int i = 0; i < pointCount; i++)
         {
-            points[i].pos_radius = new Vector4(0+i, 0, 10, 1.0f);
+            points[i].pos_radius = new Vector4(controlPoint.x + (i * 0.5f), 0, 10, 0.5f);
             points[i].vel_pad = Vector4.zero;
         }
+        points[pointCount - 1].pos_radius = new Vector4(controlPoint.x, 0, 10, 0.5f);
 
         pointsA.SetData(points);
         pointsB.SetData(points);

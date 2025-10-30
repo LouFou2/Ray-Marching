@@ -88,7 +88,7 @@ float distanceField(float3 p)
             float rad = _PointsRead[i].pointPos_Radius.w;
 
             float sphere = sdSphere(p - pos, rad);
-            d = smoothUnion(d, sphere, rad  * 0.1);
+            d = smoothUnion(d, sphere, rad  * 1.0);
         }
     }
 
@@ -148,25 +148,31 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     if(i < _PointCount - 1)
     {
-        //fluid following
+
+        //1. calculate new velocity
+        //2. write/store new velocity 
+        //3. read old velocity, update current position
+        
+        //1.
         PointData target = _PointsRead[i+1]; 
         float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz;
         float3 dir = normalize(diff);
         float dist = length(diff);
-        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w) * 0.8;
-        // probably need some conversion for diff to velocity as a useful value here
-        p.pointVelocity_pad.xyz = diff;
-
-        if(dist > p.pointPos_Radius.w && dist <= maxDist)
-        {
-            float3 fluidPos = fluidFollowPos(p.pointPos_Radius.xyz, p.pointVelocity_pad.xyz);
-            p.pointPos_Radius.xyz = fluidPos;
-        }
+        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w);
+        
         if(dist > maxDist)
         {
             p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
         }
 
+        float forceFactor = saturate(myInverseLerp(p.pointPos_Radius.w, maxDist, dist));
+        //2.
+        float3 oldVelocity = p.pointVelocity_pad.xyz;
+        float3 newVelocity = oldVelocity + dir * forceFactor * time * 0.1; // unsure this is correct  ***
+        //3.
+        p.pointPos_Radius.xyz += p.pointVelocity_pad.xyz; //add old velocity first before updating new velocity *..
+        p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
+       
     }
 
     _PointsWrite[i] = p;
