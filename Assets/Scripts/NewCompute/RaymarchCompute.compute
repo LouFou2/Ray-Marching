@@ -88,8 +88,20 @@ float distanceField(float3 p)
         {
             float3 pos = _PointsRead[i].pointPos_Radius.xyz;
             float rad = _PointsRead[i].pointPos_Radius.w;
-
+            
             float sphere = sdSphere(p - pos, rad);
+            // adding inbetween sphere
+            float3 diffBetween = _PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz;
+            float betweenDist = length(diffBetween) * 0.5;
+            float3 dirToBetween = normalize(diffBetween); // this is FROM the leading point TO the following point
+            float3 betweenPos = _PointsRead[i].pointPos_Radius.xyz + dirToBetween * betweenDist;
+            float maxDistScale = rad + _PointsRead[i-1].pointPos_Radius.w; // the maximum distance, used for scaling calculation
+            float betweenScale = myInverseLerp(rad, maxDistScale, betweenDist); // scale: if spheres are "together" its 0, if apart its 1
+            float avScale = (rad + _PointsRead[i-1].pointPos_Radius.w) * 0.5;
+            float betweenRad = avScale * betweenScale;
+            float betweenSphere = sdSphere(p - betweenPos, avScale);
+            sphere = smoothUnion(sphere, betweenSphere, avScale  * 1.0);
+
             d = smoothUnion(d, sphere, rad  * 1.0);
         }
     }
@@ -128,7 +140,7 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     if (i == _PointCount-1) // this is currently the Control Point
     {
-        p.pointPos_Radius.xyz = _ControlPointPos;
+        p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
     }
 
     if(i < _PointCount - 1)

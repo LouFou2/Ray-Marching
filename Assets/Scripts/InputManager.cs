@@ -11,9 +11,14 @@ public class InputManager : MonoBehaviour
     [SerializeField] float mouseSensitivity = 100f;
     [SerializeField] float cursorDepth = 5f;
     [SerializeField] float moveSpeed = 12f;
+    [SerializeField] float rotationSmoothTime = 0.05f;
+    [SerializeField] float moveSmoothTime = 0.1f;
+    [SerializeField] float controlSmoothTime = 0.05f;
 
-    float xRotation;
-    float yRotation;
+    Vector3 moveVelocity;
+    Vector2 rotationSmoothVelocity;
+    Vector2 currentRotation;
+    Vector2 targetRotation;
 
     bool controlSuspend;
     
@@ -33,21 +38,26 @@ public class InputManager : MonoBehaviour
         //Debug.Log("mouse x: " + mouseX + "mouse y: " + mouseY);
 
         // rotating the camera with the mouse
-        xRotation -= mouseY;
-        yRotation += mouseX;
+        targetRotation.x -= mouseY;
+        targetRotation.y += mouseX;
 
-        cam.transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
+        // Smoothly interpolate rotation
+        currentRotation.x = Mathf.SmoothDamp(currentRotation.x, targetRotation.x, ref rotationSmoothVelocity.x, rotationSmoothTime);
+        currentRotation.y = Mathf.SmoothDamp(currentRotation.y, targetRotation.y, ref rotationSmoothVelocity.y, rotationSmoothTime);
+
+        cam.transform.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, 0f);
 
         //moving camera with wasd
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
         float moveY = Input.GetKey(KeyCode.Space) ? 1 : Input.GetKey(KeyCode.LeftShift) ? -1 : 0;
 
-        Vector3 move = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ;
-        cam.transform.position += move * moveSpeed * Time.deltaTime;
+        Vector3 moveInput = cam.transform.right * moveX + cam.transform.up * moveY + cam.transform.forward * moveZ;
+        Vector3 targetMove = moveInput * moveSpeed * Time.deltaTime;
+        cam.transform.position += targetMove;
 
         //use mouse movement for setting the control object's target position
-        objectTargetPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
+        objectTargetPos =  cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.nearClipPlane + cursorDepth));
 
         if(!controlSuspend) controllerTransform.position = objectTargetPos;
 
