@@ -95,11 +95,9 @@ float distanceField(float3 p)
             float betweenDist = length(diffBetween) * 0.5;
             float3 dirToBetween = normalize(diffBetween); // this is FROM the leading point TO the following point
             float3 betweenPos = _PointsRead[i].pointPos_Radius.xyz + dirToBetween * betweenDist;
-            float maxDistScale = rad + _PointsRead[i-1].pointPos_Radius.w; // the maximum distance, used for scaling calculation
-            float betweenScale = myInverseLerp(rad, maxDistScale, betweenDist); // scale: if spheres are "together" its 0, if apart its 1
             float avScale = (rad + _PointsRead[i-1].pointPos_Radius.w) * 0.5;
-            float betweenRad = avScale * betweenScale;
             float betweenSphere = sdSphere(p - betweenPos, avScale);
+            //adding the inbetween sphere:
             sphere = smoothUnion(sphere, betweenSphere, avScale  * 1.0);
 
             d = smoothUnion(d, sphere, rad  * 1.0);
@@ -138,6 +136,8 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     PointData p = _PointsRead[i];
 
+    
+
     if (i == _PointCount-1) // this is currently the Control Point
     {
         p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
@@ -170,7 +170,7 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
         float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
-        newVelocity *= 0.98;
+        newVelocity *= 0.975;
         //3.
         float3 oldPos = p.pointPos_Radius.xyz; // just storing this for use in scaling below, before updating ***
         p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
@@ -184,10 +184,11 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         float headRadius = headPoint.pointPos_Radius.w;
         float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius; // *** should i use oldPos???
         float invLerpedFactor = myInverseLerp(restlength, headRadius * _PointCount, distFromHead);
-        //float falloffScale = acos(pow(invLerpedFactor, 3)) / (3.141592 * 0.5);
-        p.pointPos_Radius.w = headRadius * (1 - invLerpedFactor);
-        
+        invLerpedFactor = pow(invLerpedFactor, 3);
+
+        p.pointPos_Radius.w = headRadius * (1-invLerpedFactor);
     }
+
     _PointsWrite[i] = p;
 }
 
