@@ -262,7 +262,7 @@ MonoBehaviour:
   sphereScale: 1
   inputManager: {fileID: 1058997078}
   pointCount: 9
-  time: 0.2346875
+  time: 0.33333334
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0

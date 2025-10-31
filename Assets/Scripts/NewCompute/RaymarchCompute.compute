@@ -253,11 +253,17 @@ void CSMain(uint3 id : SV_DispatchThreadID)
             float4 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, n, 0);
             reflectCol = saturate(pow(reflectCol, 2.0));
 
-            float3 basicCol = float3(0, 0, 0);
+            float3 refractDirIn =  refract(p, n, 1.33);
+            float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirIn, 0);
 
-            float3 lerpedCol = lerp(basicCol, reflectCol, f);
+            float3 col1 = float3(0.376, 0.345, 0.671);
+            float3 col2 = float3(0.188, 0.4, 0.133);
+            float3 gradientCol = lerp(col1, col2, f);
 
-            col = lerpedCol;
+            float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
+            float lerpedCol = lerp(reflectRefractCol, gradientCol, -f);
+
+            col = reflectRefractCol;
             break;
         }
 
