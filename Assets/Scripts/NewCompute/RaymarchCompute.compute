@@ -198,6 +198,31 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 // Visual Rendering Kernel
 //================
 
+float4 Raymarch(float3 ro, float3 rd, float side) // the raymarch returns a position value xyz and a distance value w //"side" is for outside 1 inside -1
+{
+    const int MAX_STEPS = 128;
+    float t = 0.0;
+
+    float d = 0.001;
+    float3 p = ro;
+
+    for (int i = 0; i < MAX_STEPS; i++)
+    {
+        if (t > _MaxDistance) 
+        {
+            d = _MaxDistance;
+            break;
+        }
+
+        p = ro + rd * t; // ray origin + ray direction * t
+        d = distanceField(p) * side;
+
+        // Avoid infinite loop if distanceField returns negative or zero unexpectedly.
+        t += max(d, 1e-5);
+    }
+    return float4(p, d);
+}
+
 [numthreads(8,8,1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
@@ -225,55 +250,48 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     // Normalize and transform direction to world space
     rayView = normalize(rayView);
+    float3 rayOrigin = _CameraPos;
     float3 rayDir = normalize( mul(_CamToWorld, float4(rayView, 0)).xyz );
 
-    float3 rayOrigin = _CameraPos;
-
-    float4 bgColor = _SkyBoxCubeMap.SampleLevel(_LinearClamp, rayDir, 0);
+    float3 bgColor = _SkyBoxCubeMap.SampleLevel(_LinearClamp, rayDir, 0);
 
     // Raymarch
     float3 col = float3(0,0,0);
-    const int MAX_STEPS = 128;
-    float t = 0.0;
 
-    for (int i = 0; i < MAX_STEPS; i++)
+    float4 rayReturn = Raymarch(rayOrigin, rayDir, 1.0); // the raymarch returns a position value xyz and a distance value w
+    float3 p = rayReturn.xyz;
+    float dist = rayReturn.w;
+
+    if(dist >= _MaxDistance) col = bgColor;
+
+    if (dist < 0.001)
     {
-        if (t > _MaxDistance)
-        {
-            //col = abs(rayDir); // show direction as RGB (use abs to keep it positive)
-            col = bgColor.xyz;
-            break;
-        }
+        float3 n = getNormal(p);
+        float f = fresnel(n, rayDir);
 
-        float3 p = rayOrigin + rayDir * t;
-        float d = distanceField(p);
+        // simple reflection
+        float3 reflectDir = reflect(rayDir, n);
+        float3 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, reflectDir, 0);
 
-        if (d < 0.001)
-        {
-            float3 n = getNormal(p);
-            float f = fresnel(n, rayDir);
+        //simple refraction
+        float IOR = 1.33;
+        float3 enterPoint = p - n * 0.001;
+        float3 refractDirEnter = refract(rayDir, n, 1/IOR); // to go from less dense to more dense, use inverse of IOR
+        float4 refractInHit = Raymarch(enterPoint, refractDirEnter, -1.0); // raymarch inside, using -1
+        
+        float3 exitPoint = refractInHit.xyz;
+        float3 exitNormal = -getNormal(exitPoint);
+        float3 refractDirExit = refract(refractDirEnter, exitNormal, IOR); 
+        float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirEnter, 0);
 
-            // simple reflection
-            float3 reflectDir = reflect(p, n);
-            float3 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, reflectDir, 0);
+        float3 col1 = InsideColor.rgb;
+        float3 col2 = OutsideColor.rgb;
+        float3 gradientCol = lerp(col1, col2, f);
 
-            //simple refraction
-            float3 refractDirIn =  refract(p, n, 1.33);
-            float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirIn, 0);
+        float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
+        float3 mixedCol = reflectRefractCol * gradientCol; // gotta do the tint here correctly, this isn't it
 
-            float3 col1 = InsideColor.rgb;
-            float3 col2 = OutsideColor.rgb;
-            float3 gradientCol = lerp(col1, col2, f);
-
-            float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
-            float3 mixedCol = reflectRefractCol * gradientCol; // gotta do the tint here correctly, this isn't it
-
-            col = mixedCol;
-            break;
-        }
-
-        // Avoid infinite loop if distanceField returns negative or zero unexpectedly.
-        t += max(d, 1e-5);
+        col = mixedCol;
     }
 
     _Result[int2(id.xy)] = float4(col, 1.0);
