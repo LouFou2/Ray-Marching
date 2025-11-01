@@ -258,8 +258,11 @@ MonoBehaviour:
   raymarchCompute: {fileID: 7200000, guid: 1c8af9b6494c05d4887aa19d212e3eb8, type: 3}
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxRenderDistance: 100
-  skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
+  skyBox: {fileID: 8900000, guid: 808a2c073e1e31349bb132b3a6cb78c4, type: 3}
   sphereScale: 1
+  sphereInsideColor: {r: 0.91824514, g: 1, b: 0.4669811, a: 0}
+  sphereOutsideColor: {r: 0, g: 0.4509804, b: 0.055584412, a: 0}
+  lightDir: {x: -0.46872032, y: -0.5649101, z: -0.6791008}
   inputManager: {fileID: 1058997078}
   pointCount: 9
   time: 0.33333334
@@ -315,42 +318,10 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1942873833
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1942873835}
-  m_Layer: 0
-  m_Name: Tracer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1942873835
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1942873833}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 776795852}
   - {fileID: 1058997079}
-  - {fileID: 1942873835}
   - {fileID: 402423414}

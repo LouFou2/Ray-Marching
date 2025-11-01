@@ -21,6 +21,8 @@ public class InputManager : MonoBehaviour
     Vector2 targetRotation;
 
     bool controlSuspend;
+
+
     
     private void Start()
     {

@@ -139,8 +139,6 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
 
     PointData p = _PointsRead[i];
 
-    
-
     if (i == _PointCount-1) // this is currently the Control Point
     {
         p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
@@ -173,6 +171,10 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
         float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
+
+        // -- gravity ?
+        //newVelocity += float3(0.0, time * -0.05, 0.0);
+
         newVelocity *= 0.96;
         //3.
         p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
@@ -269,26 +271,40 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         float3 n = getNormal(p);
         float f = fresnel(n, rayDir);
 
-        // simple reflection
-        float3 reflectDir = reflect(rayDir, n);
-        float3 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, reflectDir, 0);
-
-        //simple refraction
-        float IOR = 1.33;
-        float3 enterPoint = p - n * 0.001;
-        float3 refractDirEnter = refract(rayDir, n, 1/IOR); // to go from less dense to more dense, use inverse of IOR
-        float4 refractInHit = Raymarch(enterPoint, refractDirEnter, -1.0); // raymarch inside, using -1
-        
-        float3 exitPoint = refractInHit.xyz;
-        float3 exitNormal = -getNormal(exitPoint);
-        float3 refractDirExit = refract(refractDirEnter, exitNormal, IOR); 
-        float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirEnter, 0);
-
+        //tint
         float3 col1 = InsideColor.rgb;
         float3 col2 = OutsideColor.rgb;
         float3 gradientCol = lerp(col1, col2, f);
 
+        // reflection
+        float3 reflectDir = reflect(rayDir, n);
+        float3 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, reflectDir, 0);
+
+        // refraction
+        float IOR = 1.33;
+        float3 enterPoint = p - n * 0.001;
+        float3 refractDirEnter = refract(rayDir, n, 1/IOR); // to go from less dense to more dense, use inverse of IOR
+        /*
+        float4 refractInHit = Raymarch(enterPoint, refractDirEnter, -1.0); // raymarch inside, using -1
+        float3 exitPoint = refractInHit.xyz;
+        float3 exitNormal = -getNormal(exitPoint);
+        float3 refractDirExit = refract(refractDirEnter, exitNormal, IOR); 
+        */ 
+        // this second, inside to outside refraction is a bit useless in this case, as i have intersecting primitives using smoothunion
+        // it would be sweet for a single crystal shape or something, but doesn't add much to this situation
+
+        float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirEnter, 0);
+
+        // density
+        float sphereDiameter = _PointsRead[_PointCount -1].pointPos_Radius.w * 2; // i am using the control sphere diameter as a distance "through" the object
+        //float insideDist = refractInHit.w; // the w value stores the distance ** i would use this instead of spherediameter if not for the above stated issue
+        float opticalDensity = saturate(exp(-sphereDiameter * 5)); // from this video:https://www.youtube.com/watch?v=0RWaR7zApEo&t=1488s
+
         float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
+        //reflectRefractCol = lerp(reflectRefractCol, col1, opticalDensity);
+
+        //reflectRefractCol = lerp(reflectRefractCol, gradientCol, 0.30);
+
         float3 mixedCol = reflectRefractCol * gradientCol; // gotta do the tint here correctly, this isn't it
 
         col = mixedCol;
