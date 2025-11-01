@@ -11,6 +11,8 @@ public class RaymarchComputeController : MonoBehaviour
     public Cubemap skyBox;
 
     [SerializeField] float sphereScale = 0.5f;
+    [SerializeField] Color sphereInsideColor;
+    [SerializeField] Color sphereOutsideColor;
 
     [SerializeField] InputManager inputManager;
 
@@ -50,6 +52,7 @@ public class RaymarchComputeController : MonoBehaviour
 
         float chainLength = sphereScale * pointCount - 1;
         raymarchCompute.SetFloat("totalChainLength", chainLength);
+
     }
 
     void InitRenderTexture()
@@ -87,7 +90,9 @@ public class RaymarchComputeController : MonoBehaviour
         raymarchCompute.SetTexture(mainKernel, "_Result", target);
         raymarchCompute.SetTexture(mainKernel, "_SkyBoxCubeMap", skyBox);
         raymarchCompute.SetInt("_PointCount", pointCount);
-        
+        raymarchCompute.SetVector("InsideColor", sphereInsideColor);
+        raymarchCompute.SetVector("OutsideColor", sphereOutsideColor);
+
         // Camera Stuff
         raymarchCompute.SetMatrix("_CamFrustum", CamFrustum(cam));
         raymarchCompute.SetMatrix("_CamToWorld", cam.cameraToWorldMatrix);

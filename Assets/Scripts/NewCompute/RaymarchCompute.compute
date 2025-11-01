@@ -13,6 +13,9 @@ StructuredBuffer<PointData> _PointsRead;
 RWStructuredBuffer<PointData> _PointsWrite;
 int _PointCount;
 
+float4 InsideColor;
+float4 OutsideColor;
+
 float3 _ControlPointPos;
 
 float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
@@ -170,21 +173,20 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
         float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
-        newVelocity *= 0.975;
+        newVelocity *= 0.96;
         //3.
-        float3 oldPos = p.pointPos_Radius.xyz; // just storing this for use in scaling below, before updating ***
         p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
         p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
         
         // === SCALE ===
         //1. Curve Falloff towards "tail" (0 to 1 from tail to head)
-        //2. Parabolic curve accross length
+        //2. Parabolic curve accross length *** STILL HAVENT FIGURED THIS OUT, AS THE TOTAL LENGTH UPDATES DYNAMICALLY
         PointData headPoint = _PointsRead[_PointCount - 1];
         float3 headPos = headPoint.pointPos_Radius.xyz;
         float headRadius = headPoint.pointPos_Radius.w;
-        float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius; // *** should i use oldPos???
+        float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius;
         float invLerpedFactor = myInverseLerp(restlength, headRadius * _PointCount, distFromHead);
-        invLerpedFactor = pow(invLerpedFactor, 3);
+        invLerpedFactor = pow(invLerpedFactor, 2);
 
         p.pointPos_Radius.w = headRadius * (1-invLerpedFactor);
     }
@@ -250,20 +252,23 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         {
             float3 n = getNormal(p);
             float f = fresnel(n, rayDir);
-            float4 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, n, 0);
-            reflectCol = saturate(pow(reflectCol, 2.0));
 
+            // simple reflection
+            float3 reflectDir = reflect(p, n);
+            float3 reflectCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, reflectDir, 0);
+
+            //simple refraction
             float3 refractDirIn =  refract(p, n, 1.33);
             float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirIn, 0);
 
-            float3 col1 = float3(0.376, 0.345, 0.671);
-            float3 col2 = float3(0.188, 0.4, 0.133);
+            float3 col1 = InsideColor.rgb;
+            float3 col2 = OutsideColor.rgb;
             float3 gradientCol = lerp(col1, col2, f);
 
             float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
-            float lerpedCol = lerp(reflectRefractCol, gradientCol, -f);
+            float3 mixedCol = reflectRefractCol * gradientCol; // gotta do the tint here correctly, this isn't it
 
-            col = reflectRefractCol;
+            col = mixedCol;
             break;
         }
 
