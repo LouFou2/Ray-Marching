@@ -193,10 +193,6 @@ public class RaymarchComputeController : MonoBehaviour
         if (pointsB != null) pointsB.Release();
         if (target != null) target.Release();
     }
-    public void SetLightDir()
-    {
-        lightDir = -cam.transform.forward;
-    }
 
     Matrix4x4 CamFrustum(Camera cam)
     {

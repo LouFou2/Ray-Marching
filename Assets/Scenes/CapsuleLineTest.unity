@@ -260,12 +260,11 @@ MonoBehaviour:
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: 808a2c073e1e31349bb132b3a6cb78c4, type: 3}
   sphereScale: 1
-  sphereInsideColor: {r: 0.91824514, g: 1, b: 0.4669811, a: 0}
-  sphereOutsideColor: {r: 0, g: 0.4509804, b: 0.055584412, a: 0}
-  lightDir: {x: -0.46872032, y: -0.5649101, z: -0.6791008}
+  sphereInsideColor: {r: 0.32183543, g: 0.565, b: 0.17879745, a: 0}
+  sphereOutsideColor: {r: 1, g: 1, b: 0, a: 0}
   inputManager: {fileID: 1058997078}
-  pointCount: 9
-  time: 0.33333334
+  pointCount: 33
+  time: 0.048721697
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0

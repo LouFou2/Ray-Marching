@@ -48,6 +48,77 @@ float smoothstep( float x )
   return x*x*(2.0-x*x);
 }
 
+//======================
+// Point Update Kernel (for fluid relationships between points)
+//======================
+
+[numthreads(64,1,1)]
+void UpdatePoints(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= _PointCount) return;
+
+    PointData p = _PointsRead[i];
+
+    if (i == _PointCount-1) // this is currently the Control Point
+    {
+        p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
+    }
+
+    if(i < _PointCount - 1)
+    {
+        // === VELOCITY ===
+        //1. calculate new velocity
+        //2. write/store new velocity 
+        //3. read old velocity, update current position
+        
+        float spacingFactor = 0.3;
+
+        //1.
+        PointData target = _PointsRead[i+1]; 
+        float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz; // direction TO the target, so this takes care of the negative in -k * x
+        
+        float restlength = target.pointPos_Radius.w * spacingFactor; // a little bit inside the radius, can adjust this
+        
+        float extention = length(diff) - restlength;
+        float3 dir = normalize(diff);
+        float k = 0.001; // the constant, can adjust this
+        float3 force = dir * k * extention;
+        
+        float maxDist = (target.pointPos_Radius.w + p.pointPos_Radius.w) * spacingFactor;
+        if(length(diff) > maxDist) // clamping to the max allowed distance
+        {
+            p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
+        }
+        
+        //2.
+        float3 oldVelocity = p.pointVelocity_pad.xyz;
+        float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
+
+        // -- gravity ?
+        //newVelocity += float3(0.0, time * -0.05, 0.0);
+
+        newVelocity *= 0.99;
+        //3.
+        p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
+        p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
+        
+        // === SCALE ===
+        //1. Curve Falloff towards "tail" (0 to 1 from tail to head)
+        //2. Parabolic curve accross length *** STILL HAVENT FIGURED THIS OUT, AS THE TOTAL LENGTH UPDATES DYNAMICALLY
+        PointData headPoint = _PointsRead[_PointCount - 1];
+        float3 headPos = headPoint.pointPos_Radius.xyz;
+        float headRadius = headPoint.pointPos_Radius.w;
+        float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius;
+        float invLerpedFactor = myInverseLerp(restlength, headRadius * _PointCount * spacingFactor, distFromHead);
+        invLerpedFactor = pow(invLerpedFactor, 2);
+
+        p.pointPos_Radius.w = headRadius * (1-invLerpedFactor);
+    }
+
+    _PointsWrite[i] = p;
+}
+
 //===================
 // Distance functions
 //===================
@@ -93,15 +164,21 @@ float distanceField(float3 p)
             float rad = _PointsRead[i].pointPos_Radius.w;
             
             float sphere = sdSphere(p - pos, rad);
+
+            /*
             // adding inbetween sphere
-            float3 diffBetween = _PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz;
-            float betweenDist = length(diffBetween) * 0.5;
-            float3 dirToBetween = normalize(diffBetween); // this is FROM the leading point TO the following point
-            float3 betweenPos = _PointsRead[i].pointPos_Radius.xyz + dirToBetween * betweenDist;
-            float avScale = (rad + _PointsRead[i-1].pointPos_Radius.w) * 0.5;
-            float betweenSphere = sdSphere(p - betweenPos, avScale);
-            //adding the inbetween sphere:
-            sphere = smoothUnion(sphere, betweenSphere, avScale  * 1.0);
+            if(length(_PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz) >= (_PointsRead[i].pointPos_Radius.w + _PointsRead[i-1].pointPos_Radius.w) * 0.9)
+            {
+                float3 diffBetween = _PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz;
+                float betweenDist = length(diffBetween) * 0.5;
+                float3 dirToBetween = normalize(diffBetween); // this is FROM the leading point TO the following point
+                float3 betweenPos = _PointsRead[i].pointPos_Radius.xyz + dirToBetween * betweenDist;
+                float avScale = (rad + _PointsRead[i-1].pointPos_Radius.w) * 0.5;
+                float betweenSphere = sdSphere(p - betweenPos, avScale);
+                //adding the inbetween sphere:
+                sphere = smoothUnion(sphere, betweenSphere, avScale  * 1.0);
+            }
+            */
 
             d = smoothUnion(d, sphere, rad  * 1.0);
         }
@@ -125,75 +202,6 @@ float fresnel(float3 n, float3 rd)
 {
     float d = 1 - saturate(abs(dot(n, rd)));
     return d;
-}
-
-//======================
-// Point Update Kernel (for fluid relationships between points)
-//======================
-
-[numthreads(64,1,1)]
-void UpdatePoints(uint3 id : SV_DispatchThreadID)
-{
-    uint i = id.x;
-    if (i >= _PointCount) return;
-
-    PointData p = _PointsRead[i];
-
-    if (i == _PointCount-1) // this is currently the Control Point
-    {
-        p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
-    }
-
-    if(i < _PointCount - 1)
-    {
-        // === VELOCITY ===
-        //1. calculate new velocity
-        //2. write/store new velocity 
-        //3. read old velocity, update current position
-        
-        //1.
-        PointData target = _PointsRead[i+1]; 
-        float3 diff = target.pointPos_Radius.xyz - p.pointPos_Radius.xyz; // direction TO the target, so this takes care of the negative in -k * x
-        
-        float restlength = target.pointPos_Radius.w * 0.8; // a little bit inside the radius, can adjust this
-        
-        float extention = length(diff) - restlength;
-        float3 dir = normalize(diff);
-        float k = 0.005; // the constant, can adjust this
-        float3 force = dir * k * extention;
-        
-        float maxDist = (p.pointPos_Radius.w + target.pointPos_Radius.w);
-        if(length(diff) > maxDist) // clamping to the max allowed distance
-        {
-            p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
-        }
-        
-        //2.
-        float3 oldVelocity = p.pointVelocity_pad.xyz;
-        float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
-
-        // -- gravity ?
-        //newVelocity += float3(0.0, time * -0.05, 0.0);
-
-        newVelocity *= 0.96;
-        //3.
-        p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
-        p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
-        
-        // === SCALE ===
-        //1. Curve Falloff towards "tail" (0 to 1 from tail to head)
-        //2. Parabolic curve accross length *** STILL HAVENT FIGURED THIS OUT, AS THE TOTAL LENGTH UPDATES DYNAMICALLY
-        PointData headPoint = _PointsRead[_PointCount - 1];
-        float3 headPos = headPoint.pointPos_Radius.xyz;
-        float headRadius = headPoint.pointPos_Radius.w;
-        float distFromHead = length(headPos - p.pointPos_Radius.xyz) - headRadius;
-        float invLerpedFactor = myInverseLerp(restlength, headRadius * _PointCount, distFromHead);
-        invLerpedFactor = pow(invLerpedFactor, 2);
-
-        p.pointPos_Radius.w = headRadius * (1-invLerpedFactor);
-    }
-
-    _PointsWrite[i] = p;
 }
 
 //================
@@ -270,6 +278,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         float3 n = getNormal(p);
         float f = fresnel(n, rayDir);
+        f = saturate(f * f); 
 
         //tint
         float3 col1 = InsideColor.rgb;
@@ -296,14 +305,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirEnter, 0);
 
         // density
-        float sphereDiameter = _PointsRead[_PointCount -1].pointPos_Radius.w * 2; // i am using the control sphere diameter as a distance "through" the object
-        //float insideDist = refractInHit.w; // the w value stores the distance ** i would use this instead of spherediameter if not for the above stated issue
-        float opticalDensity = saturate(exp(-sphereDiameter * 5)); // from this video:https://www.youtube.com/watch?v=0RWaR7zApEo&t=1488s
+        float dens = 0.7;
+        float3 densCol = col1 * dens;
+        refractCol = lerp(refractCol, densCol, dens);
+
 
         float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
-        //reflectRefractCol = lerp(reflectRefractCol, col1, opticalDensity);
-
-        //reflectRefractCol = lerp(reflectRefractCol, gradientCol, 0.30);
 
         float3 mixedCol = reflectRefractCol * gradientCol; // gotta do the tint here correctly, this isn't it
 
