@@ -259,12 +259,12 @@ MonoBehaviour:
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxRenderDistance: 100
   skyBox: {fileID: 8900000, guid: 808a2c073e1e31349bb132b3a6cb78c4, type: 3}
-  sphereScale: 1
+  sphereScale: 0.7
   sphereInsideColor: {r: 0.32183543, g: 0.565, b: 0.17879745, a: 0}
   sphereOutsideColor: {r: 1, g: 1, b: 0, a: 0}
   inputManager: {fileID: 1058997078}
   pointCount: 33
-  time: 0.048721697
+  time: 0.1346456
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,6 +275,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1058997079}
   - component: {fileID: 1058997078}
+  - component: {fileID: 1058997080}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
@@ -317,6 +318,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1058997080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058997077}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: d9444676a18515346b42330173d5cb48, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Touch
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

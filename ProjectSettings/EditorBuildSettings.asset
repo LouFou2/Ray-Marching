@@ -4,6 +4,9 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/CapsuleLineTest.unity
+    guid: 7fad5ea260baf9f46a343827ca82c8a8
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
