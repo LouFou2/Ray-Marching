@@ -101,9 +101,12 @@ public class RaymarchComputeController : MonoBehaviour
         raymarchCompute.SetVector("_Resolution", new Vector4(target.width, target.height, 0, 0));
 
         UpdateControlPoint();
+        // --Update "tendril" anchor point--
+        UpdateCamAnchorPoint();
+
 
         // === Buffers ===
-        
+
         int threadGroups = Mathf.CeilToInt(pointCount / (float)64); // 64 seems to be the recommended size, can later be upscaled for more technical setups
 
         // ensure update kernel has the current buffers
@@ -168,6 +171,14 @@ public class RaymarchComputeController : MonoBehaviour
     {
         Vector3 cpPos = inputManager.GetControlPointPos();
         raymarchCompute.SetVector("_ControlPointPos", cpPos);
+    }
+    void UpdateCamAnchorPoint()
+    {
+        float anchorDistance = 5f;     // how far in front of the camera the anchor sits
+        Vector3 viewportPos = new Vector3(1f, 1f, anchorDistance);  // right edge top
+
+        Vector3 camAnchor = cam.ViewportToWorldPoint(viewportPos);
+        raymarchCompute.SetVector("_AnchorPointPos", camAnchor);
     }
     /*
     void UpdateSphereBufferIfCountChanged()

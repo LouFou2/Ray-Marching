@@ -17,6 +17,7 @@ float4 InsideColor;
 float4 OutsideColor;
 
 float3 _ControlPointPos;
+float3 _AnchorPointPos;
 
 float4x4 _CamFrustum;   // rows: 0=TL,1=TR,2=BR,3=BL (as your C# builds it)
 float4x4 _CamToWorld;   // camera to world matrix
@@ -64,15 +65,19 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
     {
         p.pointPos_Radius.xyz = lerp(p.pointPos_Radius.xyz, _ControlPointPos, time * 10.0);
     }
+    if(i == 0)
+    {
+        p.pointPos_Radius.xyz = _AnchorPointPos;
+    }
 
-    if(i < _PointCount - 1)
+    if(i < _PointCount - 1 && i > 0)
     {
         // === VELOCITY ===
         //1. calculate new velocity
         //2. write/store new velocity 
         //3. read old velocity, update current position
         
-        float spacingFactor = 0.3;
+        float spacingFactor = 0.5; // percentage of the radius, to squeeze speheres closer together
 
         //1.
         PointData target = _PointsRead[i+1]; 
@@ -82,7 +87,7 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         
         float extention = length(diff) - restlength;
         float3 dir = normalize(diff);
-        float k = 0.001; // the constant, can adjust this
+        float k = 0.008; // the constant, can adjust this
         float3 force = dir * k * extention;
         
         float maxDist = (target.pointPos_Radius.w + p.pointPos_Radius.w) * spacingFactor;
@@ -90,12 +95,28 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         {
             p.pointPos_Radius.xyz = target.pointPos_Radius.xyz - dir * maxDist;
         }
+        // and now we apply springforce backwards...
+        PointData target2 = _PointsRead[i-1]; 
+        float3 diff2 = target2.pointPos_Radius.xyz - p.pointPos_Radius.xyz; // direction TO the target, so this takes care of the negative in -k * x
+        
+        float restlength2 = target2.pointPos_Radius.w * spacingFactor; // a little bit inside the radius, can adjust this
+        
+        float extention2 = length(diff2) - restlength2;
+        float3 dir2 = normalize(diff2);
+        float3 force2 = dir2 * k * extention2;
+        //force2 *= 0.33;
+        
+        float maxDist2 = (target2.pointPos_Radius.w + p.pointPos_Radius.w) * spacingFactor;
+        if(length(diff2) > maxDist2) // clamping to the max allowed distance
+        {
+            p.pointPos_Radius.xyz = target2.pointPos_Radius.xyz - dir2 * maxDist2;
+        }
         
         //2.
         float3 oldVelocity = p.pointVelocity_pad.xyz;
-        float3 newVelocity = oldVelocity + force; // unsure this is correct  ***
+        float3 newVelocity = oldVelocity + force + force2; // unsure this is correct  ***
 
-        // -- gravity ?
+        // -- GRAVITY -- ? (uncomment if using gravity)
         //newVelocity += float3(0.0, time * -0.05, 0.0);
 
         newVelocity *= 0.99;
@@ -103,6 +124,7 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         p.pointPos_Radius.xyz += oldVelocity; //add old velocity first before updating new velocity *..
         p.pointVelocity_pad.xyz = newVelocity; // ..* this will be written/stored for the next frame
         
+        /*
         // === SCALE ===
         //1. Curve Falloff towards "tail" (0 to 1 from tail to head)
         //2. Parabolic curve accross length *** STILL HAVENT FIGURED THIS OUT, AS THE TOTAL LENGTH UPDATES DYNAMICALLY
@@ -114,6 +136,7 @@ void UpdatePoints(uint3 id : SV_DispatchThreadID)
         invLerpedFactor = pow(invLerpedFactor, 2);
 
         p.pointPos_Radius.w = headRadius * (1-invLerpedFactor);
+        */
     }
 
     _PointsWrite[i] = p;
@@ -158,27 +181,12 @@ float distanceField(float3 p)
 
     if(_PointCount > 1)
     {
-        for (int i = _PointCount - 1; i > 0 ; i--)
+        for (int i = _PointCount - 1; i >= 0 ; i--)
         {
             float3 pos = _PointsRead[i].pointPos_Radius.xyz;
             float rad = _PointsRead[i].pointPos_Radius.w;
             
             float sphere = sdSphere(p - pos, rad);
-
-            /*
-            // adding inbetween sphere
-            if(length(_PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz) >= (_PointsRead[i].pointPos_Radius.w + _PointsRead[i-1].pointPos_Radius.w) * 0.9)
-            {
-                float3 diffBetween = _PointsRead[i-1].pointPos_Radius.xyz - _PointsRead[i].pointPos_Radius.xyz;
-                float betweenDist = length(diffBetween) * 0.5;
-                float3 dirToBetween = normalize(diffBetween); // this is FROM the leading point TO the following point
-                float3 betweenPos = _PointsRead[i].pointPos_Radius.xyz + dirToBetween * betweenDist;
-                float avScale = (rad + _PointsRead[i-1].pointPos_Radius.w) * 0.5;
-                float betweenSphere = sdSphere(p - betweenPos, avScale);
-                //adding the inbetween sphere:
-                sphere = smoothUnion(sphere, betweenSphere, avScale  * 1.0);
-            }
-            */
 
             d = smoothUnion(d, sphere, rad  * 1.0);
         }
@@ -299,7 +307,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         float3 exitNormal = -getNormal(exitPoint);
         float3 refractDirExit = refract(refractDirEnter, exitNormal, IOR); 
         */ 
-        // this second, inside to outside refraction is a bit useless in this case, as i have intersecting primitives using smoothunion
+        // this second, inside-to-outside refraction is a bit useless in this case, as i have intersecting primitives using smoothunion
         // it would be sweet for a single crystal shape or something, but doesn't add much to this situation
 
         float3 refractCol = _SkyBoxCubeMap.SampleLevel(_LinearClamp, refractDirEnter, 0);
@@ -308,7 +316,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         float dens = 0.7;
         float3 densCol = col1 * dens;
         refractCol = lerp(refractCol, densCol, dens);
-
 
         float3 reflectRefractCol = lerp(refractCol, reflectCol, f);
 

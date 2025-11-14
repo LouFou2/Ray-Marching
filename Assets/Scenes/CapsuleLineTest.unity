@@ -258,13 +258,13 @@ MonoBehaviour:
   raymarchCompute: {fileID: 7200000, guid: 1c8af9b6494c05d4887aa19d212e3eb8, type: 3}
   blitShader: {fileID: 4800000, guid: 9a67acf8160931a429caa756a9668ae5, type: 3}
   maxRenderDistance: 100
-  skyBox: {fileID: 8900000, guid: 808a2c073e1e31349bb132b3a6cb78c4, type: 3}
-  sphereScale: 1
+  skyBox: {fileID: 8900000, guid: bf1e6f12eff1d0f49914d363340492ba, type: 3}
+  sphereScale: 0.5
   sphereInsideColor: {r: 0.32183543, g: 0.565, b: 0.17879745, a: 0}
   sphereOutsideColor: {r: 1, g: 1, b: 0, a: 0}
   inputManager: {fileID: 1058997078}
-  pointCount: 33
-  time: 0.048721697
+  pointCount: 24
+  time: 0.1592153
 --- !u!1 &1058997077
 GameObject:
   m_ObjectHideFlags: 0
